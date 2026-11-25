@@ -1,0 +1,1663 @@
+{
+ "source": "https://github.com/jfisher-lab/NSCLC/blob/main/results/combination_screen/node_results.csv",
+ "description": "Published VMCAI results for the NSCLC-master model. Each entry is one (background, intervention) case; lo/hi are the steady-state interval per phenotype and iterations is BMA's Time field. Sampled with seed 20260928: all 7 baselines, 40 single knockouts, 60 double knockouts.",
+ "sampling": {
+  "seed": 20260928,
+  "baselines": 7,
+  "singles": 40,
+  "doubles": 60
+ },
+ "cases": [
+  {
+   "background": "a549",
+   "interventions": [],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 808
+  },
+  {
+   "background": "h1993",
+   "interventions": [],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 772
+  },
+  {
+   "background": "hcc827",
+   "interventions": [],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 773
+  },
+  {
+   "background": "healthy",
+   "interventions": [],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 917
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 754
+  },
+  {
+   "background": "pc9",
+   "interventions": [],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 767
+  },
+  {
+   "background": "sw1573",
+   "interventions": [],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 681
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "XRCC4:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 767
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "AMPK:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 829
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "CycD:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 806
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "CycB:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 765
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "53BP1:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 742
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "pRB:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 742
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "Plk1:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 0
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 839
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "p53:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 726
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "BCL-2:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 770
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "MRE11:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 917
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "KU80:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 767
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "Akt:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 709
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "CHK2:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 793
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "Plk1:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 0
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 684
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "DNA-PKcs:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 749
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "CDK2:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 683
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "p16:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 765
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "ARF:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 768
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "MEK:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 716
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "AMPK:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 776
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "SOS:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 754
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "53BP1:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 686
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "CDK2:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 808
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "LRP:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 3
+   },
+   "iterations": 226
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "CDC25A:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 724
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "PTEN:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 680
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "ELF3:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 712
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "BCL-W:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 912
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "RAF:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 755
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "p70S6K:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 683
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "CDK2:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 770
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "STAT3:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 736
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "EGFR:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 791
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "ATR:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 763
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "MDM2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 771
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "PKA:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 805
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "RAD51:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 906
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "NRF2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 758
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "MEK:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 2
+   },
+   "iterations": 590
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "4EBP1:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 3
+   },
+   "iterations": 665
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "KEAP1:3",
+    "PI3K:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 724
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "BCL-W:3",
+    "Caspase3:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 2,
+    "hi": 3
+   },
+   "iterations": 671
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "ATM:0",
+    "CHK1:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 665
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "MCL-1:3",
+    "p16:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 672
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "CDC25A:0",
+    "RAF:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 736
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "MRE11:3",
+    "STAT3:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 728
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "Beta-Catenin:3",
+    "CDC25A:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 736
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "DNA-PKcs:3",
+    "Wee1:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 724
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "4EBP1:0",
+    "ELF3:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 782
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "CDKN2A:0",
+    "MDM2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 766
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "YB1:0",
+    "p90RSK:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 865
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "14_3_3:0",
+    "FOXM1:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 737
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "ARF:0",
+    "Wee1:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 754
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "Akt:3",
+    "CBF:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 625
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "CycB:3",
+    "PTEN:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 763
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "CycE:3",
+    "MRE11:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 702
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "MAX:3",
+    "p27:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 767
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "CDC25A:0",
+    "RAD51:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 721
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "PUMA:3",
+    "RBX1:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 760
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "MYC:3",
+    "mTORC2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 756
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "KEAP1:0",
+    "PKA:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 760
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "Ku:3",
+    "MET:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 723
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "4EBP1:0",
+    "BCL-XL:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 795
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "JAK2:0",
+    "MET:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 700
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "LRP:3",
+    "MDM2:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 902
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "Plk1:0",
+    "p70S6K:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 0
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 658
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "FOXO3:3",
+    "RAD51:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 734
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "CHK1:0",
+    "hTERT:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 718
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "CycE:3",
+    "FOXO3:3"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 742
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "CDC25C:2",
+    "Fyn:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 755
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "BCL-XL:3",
+    "RBX1:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 891
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "Caspase3:0",
+    "CycE:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 910
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "BAKBAX:3",
+    "Fyn:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 797
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "53BP1:0",
+    "CDC25C:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 704
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "Erbb3:0",
+    "KEAP1:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 765
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "FOXM1:0",
+    "p70S6K:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 739
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "Bim:3",
+    "mTORC2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 720
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "CHK2:3",
+    "NFkB:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 678
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "CUL3:0",
+    "FOXM1:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 706
+  },
+  {
+   "background": "h1993",
+   "interventions": [
+    "CDK2:0",
+    "KEAP1:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 759
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "mTORC1:0",
+    "p70S6K:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 737
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "ATM_deficient:0",
+    "STK11:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 808
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "BCL-XL:0",
+    "mTORC2:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 2
+   },
+   "iterations": 720
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "ATR:3",
+    "Erbb3:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 726
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "Frizzled:3",
+    "NFkB:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 666
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "CUL3:3",
+    "Fyn:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 798
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "CDC25C:0",
+    "RAF:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 746
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "PUMA:3",
+    "RNF168:0"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 3
+   },
+   "iterations": 656
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "JAK2:0",
+    "PTEN:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 2,
+    "hi": 2
+   },
+   "iterations": 858
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "APC:3",
+    "BCL-XL:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 674
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "Bim:3",
+    "CDC25A:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 732
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "EGFR:3",
+    "mTORC1:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 735
+  },
+  {
+   "background": "hcc827",
+   "interventions": [
+    "NRF2:0",
+    "p70S6K:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 683
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "ATM:0",
+    "Plk1:0"
+   ],
+   "proliferation": {
+    "lo": 0,
+    "hi": 0
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 647
+  },
+  {
+   "background": "pc9",
+   "interventions": [
+    "Akt:3",
+    "IL-6:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 744
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "Bim:0",
+    "p90RSK:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 2
+   },
+   "death": {
+    "lo": 0,
+    "hi": 0
+   },
+   "iterations": 785
+  },
+  {
+   "background": "a549",
+   "interventions": [
+    "mTORC2:3",
+    "p27:0"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 722
+  },
+  {
+   "background": "healthy",
+   "interventions": [
+    "BAKBAX:3",
+    "p90RSK:0"
+   ],
+   "proliferation": {
+    "lo": 1,
+    "hi": 1
+   },
+   "death": {
+    "lo": 3,
+    "hi": 3
+   },
+   "iterations": 876
+  },
+  {
+   "background": "sw1573",
+   "interventions": [
+    "CUL3:3",
+    "PUMA:3"
+   ],
+   "proliferation": {
+    "lo": 2,
+    "hi": 3
+   },
+   "death": {
+    "lo": 0,
+    "hi": 2
+   },
+   "iterations": 670
+  },
+  {
+   "background": "ncih1792",
+   "interventions": [
+    "14_3_3:0",
+    "NOTCH1:3"
+   ],
+   "proliferation": {
+    "lo": 3,
+    "hi": 3
+   },
+   "death": {
+    "lo": 1,
+    "hi": 1
+   },
+   "iterations": 768
+  }
+ ]
+}

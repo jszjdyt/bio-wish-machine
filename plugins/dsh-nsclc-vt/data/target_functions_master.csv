@@ -1,0 +1,178 @@
+Node,Target.Function,Minimum.Value,Maximum.Value,Citation,Reasoning
+14_3_3,avg(pos)-avg(neg),0,3,"Qi et al., 2003",Sequesters Cdc25c in cytoplasm and inhibits its activity.
+4EBP1,3-mTORC1,0,3,"Wu et al., 2019",Inhibted by mTORC1.
+53BP1,RNF8-BRCA1 + NRF2 -1,0,3,"Hu et al., 2014; Chapman et al., 2012; Williams et al., 2017; Yang et al., 2021",Activated by RNF8 and NRF2; inhibited by BRCA1.
+Akt,"ceil(avg(PI3K,mTORC2)) - max(0,AMPK-1)",0,3,"Guo et al., 2013; Xia et al., 2021","Activated by PI3K and mTORC2, inhibited by AMPK."
+AMPK,"STK11 - max(ERK,Akt)",0,3,"Thoreen and Sabatini, 2005; Hahn-Windgassen et al., 2005",Activated by STK11; dowregulated by ERK and/or Akt.
+APC,1,0,3,"Kimelman and Xu, 2006; Xing et al., 2003",Contributes to GSK3B-AXIN-CK1-APC complex.
+Apoptosis,"ceil(avg(MOMP,Caspase3))",0,3,"Tait et al., 2010; Brentnall et al., 2013",Activated by MOMP and Caspase-3.
+ARF,"(max(0,MYCMAX-2) + max(0,E2F-2)) * min(1,CDKN2A) - (Twist-2)",0,3,"Komori et al., 2005; Zindy et al., 1998; Kwok et al., 2007",Encoded by CDKN2A. Activated by overexpression of MYCMAX and ARF; inhibited by Twist.
+ATM,"MRN*max(0,min(1,1-ATM_deficient))+min(1,ATM_deficient*MRN)",0,2,,
+ATM_Control,ATM-(2-(UrDSB)),0,3,"Buscemi et al., 2004; Ismail et al., 2005",ATM is activated by DNA double strand breaks.
+ATM_deficient,avg(pos)-avg(neg),,,,
+ATR,avg(pos)-avg(neg),0,3,"Mar�chal and Zou, 2013",
+BAD,"3-ceil(avg(Akt,p90RSK))",0,3,"Datta et al., 1997; Hurbin et al., 2005",Inhibited by Akt and p90RSK.
+BAKBAX,"3 - ceil(avg(BCL-2,BCL-W,BCL-XL,MCL-1))",0,3,"Fennel and Swanton, 2012; Kale et al., 2018","Inhibited by BCL-2, BCL-W, BCL-XL and MCL-1."
+BCL-2,"(2 - ceil(avg(BAD,Bim,PUMA)) + min(NFkB,min(NRF2,STAT3)) - max(0, 1-c-Jun)) * max(1, (c-Jun-1))",0,3,"Chen et al., 2005; Liu et al., 2015; Chen et al., 2017; Kang et al., 2019; Park et al., 1997","Activated by BIM, BAD, PUMA; inhibited by NFkB, NRF2, STAT3 and c-Jun."
+BCL-W,"3-floor(avg(Bim,PUMA))",0,3,"Chen et al., 2005; Zhang et al., 2013",Inhibited by BIM and PUMA.
+BCL-XL,"2 - ceil(avg(BAD,Bim,PUMA)) + floor(avg(NFkB,NRF2,Beta-Catenin,STAT3))",0,3,"Chen et al., 2005; Chen et al., 2017; Niture and Jaiswal, 2013; Zhang et al., 2013","Activated by NFkB, NRF2, Beta-Catenin and STAT3; inhibited by BAD, Bim and PUMA."
+Beta-Catenin,"((2-GSK3B-AXIN-CK1-APC) + Akt + max(0,EGFR-2)) * (3-Beta-TRCP)",0,3,"MacDonals and He, 2012; Zhang and Wang, 2020; Nakayama et al., 2014; Fuchs et al., 2004","Activated by GSK3B-AXIN-CK1-APC; inhibited by Akt, EGFR and Beta-TRCP."
+Beta-TRCP,"2 * min(max(GSK3B,0),1)",0,3,"Paul and Dey, 2007","Inhibits Beta-Catenin. GSK-3_, which can phosphorylate _-TrCP, increasing NRF2 ubiquitination. "
+Bim,"3 - ceil(avg(Akt,ERK+1)) + floor(avg(MYCMAX,FOXO3))",0,3,"Muthalagu et al., 2014;  Meng et al., 2010;  Takezawa et al., 2011;  Qi et al., 2006",Activated by MYCMAX and FOXO3; inhibited by Akt and ERK.
+BRCA1,"max(CtIP, RAP80) * min(1, CtIP)",0,3,"Nakamura et al., 2010; Hu et al., 2011",Activated by CtIP and RAP80; CtIP function essential for activity.
+BRCA2,avg(pos)-avg(neg),0,3,"Zhang et al., 2009",Activated by PALB2.
+c-Jun,"floor(avg(Akt,ERK)) * max (1, (2-NFkB))",0,3,"Nguyen et al., 2004; Zhao et al.,2015; Eliseev et al., 2005","Activated by Akt, ERK and NFkB."
+Caspase3,avg(pos)-avg(neg),0,3,,
+Caspase9,"ceil(MOMP - floor(avg(Akt,ERK,CycB_CDK1)))",0,3,"Kalkavan and Green, 2018; Allan and Clarke, 2007;  Cardone et al., 1998; Allan et al., 2003","Activated by MOMP; inhibited by Akt, ERK and Cyclin B-CDK1."
+CBF,3-NCID,,,,
+CDC25A,"ceil(avg(E2F,Plk1,MYCMAX)) - ceil(avg(CHK1,CHK2))",0,3,"Karlsson-Rosenthal and Millar, 2006; Vigo et al., 1999; Z�rnig and Evan, 1996; Mailand et al., 2002","Activated by E2F, Plk1 and MYCMAX; inhibited by CHK1 and CHK2."
+CDC25C,"1+(MYCMAX)-floor(avg(14_3_3,ATM, CHK1, CHK2))",,,,
+CDK1,3-Wee1,0,3,"Ghelli Luserna di Ror� et al., 2020",Inhibited by Wee1.
+CDK2,"3-avg(p21,Wee1)",0,3,"Al Bitar and Gali-Muhtasib, 2019; Otto and Sicinski, 2017",Inhibited by p21 and Wee1.
+CDK4,"3-(max(p15,p16))",0,3,"Bockstaele et al., 2006",Inhibited by p15 and p16.
+CDKN2A,2,0,3,"Chan et al., 2021",Protein encoding gene.
+CHK1,"max(ATR, floor(avg(ATR, MEK-1)))",0,3,"Lee et al., 2017",Activated by ATR. Activity potentiated by high MEK activity.
+CHK2,avg(pos)-avg(neg),0,3,,
+CtIP,avg(pos)-avg(neg),0,3,"Han et al, 2021",Activated by ATM.
+CUL3,2,0,3,"Mikac et al., 2021",Constitutively active unless mutated.
+CycB,"ceil(avg(FOXM1,STAT3)) - FOXO3",0,3,"Xu et al., 2012",Activated by FOXM1 and STAT3; inhibited by FOXO3.
+CycB_CDK1,"ceil(avg(CycB,CDK1,CDC25A,NRF2) - max(0,p21-2)) * min(1,CDC25C)  * min(1,CycB)  * min(1,CDK1) * min(1,CDC25A)",0,3,"Petri et al., 2007; Timofeev et al., 2010; Murakami and Motohashi, 2015; Kreis et al., 2015","Activated by NRF2, Cyclin B and CDK1; inhibited by p21."
+CycD,"ceil(avg(YB1,NFkB,TCF,ERK,STAT3)) - floor(avg(GSK3B,4EBP1)) + MYCMAX",0,3,"Harada et al., 2014; Hinz et al., 1999; Klein and Assoian 2008; Lim et al., 2006; Garc�a-Guti�rrez et al., 2019; Chambard et al., 2007; Kang et al., 2019; Barnhart et al., 2008; Yu et al.,2012","Activated by YB1, NFkB, TCF, MYCMAX, ERK and STAT3; inhibited by GSK3B, 4EBP1."
+CycD_CDK4,"floor(avg(CycD,CDK4,NRF2) - avg(p27,p21)) * min(1,min(CycD,CDK4))",0,3,"Datar et al., 2006; Xie et al., 2021; Shah et al., 2013; Naruse et al., 2000; He et al., 2005","Activated by NRF2, Cyclin D and CDK4; inhibited by p27 and p21."
+CycE,avg(pos)-avg(neg),0,3,,
+CycE_CDK2,"ceil(avg(min(CycE,CDK2) * min(1,CDC25A),NRF2)) - (avg(max(0,p27-1),max(0,p21-1)))",0,3,"Shen and Huan, 2012; Gudas et al., 1999; He et al., 2005; Sheaff et al., 1997","Activated by NRF2, Cyclin E, CDK2, CDC25A; inhibited by p27 and p21."
+Death,"(max(max(Apoptosis, Necrosis), toxic_NHEJ)) + max(0, min(1, Excess_HR-1))",0,3,"Golstein and Kroemer, 2007; Roos and Kaina, 2006; Appanah et al., 2020",Cell death may be apoptotic or necrotic. Excess HR is toxic to the cell. 
+Dishevelled,"avg(Frizzled, LRP) *min(1, LRP)*min(1, Frizzled)",0,3,"Cong et al., 2004","Activated by LRP and Frizzled, whic are both essential for activity."
+DNA-PKcs,"max(ceil(avg((ATM-1), Ku)), Ku) * min(1, Ku)",0,3,"Dobbs et al., 2010; Chen et al., 2007",Requires presence of Ku for activity; degree of activity depends on ATM and Ku activities.
+DSB,"max(max(avg(Mitosis, IR), avg(Fork_Stalling, IR)), IR)",0,3,"Barnard et al., 2013; Crasta et al., 2012; Cortez 2015",IR induces high levels of DSBs and routinely occur during mitosis. Fork stalling leads to DNA DSBs.
+E2F,3-pRB,0,3,"Giacinti and Giordano, 2006",Inhibited by pRB.
+EGF,2,0,3,"Wells, 1999",Activated by EGFR.
+EGFR,"Erbb1 * (min(1, MUC1) * max(1, (MUC1-1)))",0,3,"Purba et al., 2017; Kharbanda et al., 2014",Activated by Erbb1 and MUC1. MUC1 function essential for activity. 
+ELF3,1,0,3,"Wang et al., 2018",Activated by RAS and PI3K.
+End_Resection,"max(BRCA1, avg(CtIP, BRCA1)-53BP1)",0,3,"Cruz-Garc�a et al., 2014; Zimmermann et al., 2013",Activated by CtIP and BRCA1; inhibited by 53BP1.
+Erbb1,avg(pos)-avg(neg),0,3,,
+Erbb3,"((max(0,(1-ERK))*max(0,min(1,Erbb1-2)) + max(0,(1-Erbb1))*max(0,min(1,MET-2))))*3",0,3,"Engelman et al., 2007; Sithanandam and Anderson, 2008; Lee et al., 2019","Activated by ERK, MET and EGFR."
+ERK,MEK,0,3,"Kalkavan and Green, 2018; Yao et al., 2011;  Marshall, 1994; Lee et al., 2017",MEK is essential for ERK activity. ERK is further activated by MUC1.
+Excess_HR,"min(End_Resection, 3-max(0, min(1,max(BRCA1, BRCA2))))",0,3,,
+Fork_Stalling,SSB-ATR,0,3,"Alexander and Orr-Weaver, 2016; Paulsen and Cimprich, 2007",Replication fork stalling is caused by DNA single-strand breaks; ATR prevents fork collapse and promotesrestart of replication fork preogression.
+FOXM1,"floor(avg(CycD_CDK4,E2F,MYCMAX,STAT3)) - pRB",0,3,"Liao et al., 2018; VanArsdale et al., 2015","Activated by CyclinD-CDK4, E2F, MYCMAX and STAT3; inhibited by pRB."
+FOXO3,"3 - ceil(avg(Akt,ERK)) + min(1, min(AMPK, p53))",0,3,"Renault et al., 2011;  Wang et al., 2017;  Chiacchiera and Simone, 2010;  Liu et al., 2018",Activated by AMPK and p53; inhibited by Akt and ERK.
+Frizzled,"WNT-max(0, ZNRF3-1)",0,3,"Chang et al., 2020",Activated by Wnt; inhibited by ZNRF3.
+Fyn,avg(pos)-avg(neg),0,3,,
+G1_S_transition,avg(pos)-avg(neg),0,3,"Bertoli et al., 2013",Activated by Cyclin E-CDK2.
+G1arrest,avg(pos)-avg(neg),0,3,"Park et al., 2001",Inhibited by p27.
+G2_M_arrest,3 - CycB_CDK1,0,3,"Castedo et al., 2002",Inhibited by CyclinB-CDK1.
+G2_Repair,avg(pos)-avg(neg),0,3,"Truong et al., 2013",HR and MMEJ mediate DNA double strand break repair in S and G2 phases of the cell cycle.
+GRB2,"ceil(avg(EGFR,JAK2,MET, MUC1))",0,3,"Sacco and Clague, 2015;  Bousoik and Montazeri Aliabadi, 2018;  Bidkhori et al., 2012","Activated by EGFR, JAK2, MET and MUC1."
+GSK3B,"3 - ceil(avg(Akt,ERK,MUC1,p70S6K-1,p90RSK))",0,3,,"Inhibited by Akt, ERK, MUC1, p70S6K and p90RSK."
+GSK3B-AXIN-CK1-APC,"(3-Dishevelled) * min(GSK3B, APC)",0,3,"Paul and Dey, 2008; Huang et al., 2005",Inhibited by Dishevelled. APC and GSK3B are key members of this protein complex.
+HGF,2,0,3,"Organ and Tsao, 2011",Activated by MET.
+HR,avg(pos)-avg(neg),0,3,"Budke et al., 2012",Mediates homologous recombination.
+hTERT,"ceil(avg(Akt, Beta-Catenin, MYCMAX))",0,3,"Daniel et al., 2012; Pestana et al., 2017; Khattar and Tergaonkar, 2017","Activated by Akt, Beta-Catenin and MYCMAX."
+Hypoxia,2,0,3,,
+IL-6,"2 + max(0,EGFR-2)",0,3,"Ray et al., 2018",Constitutive expression. High EGFR activity elevates expression.
+IL-R6,avg(pos)-avg(neg),0,3,,
+IR,3-IR_FLIP,0,3,"Barnard et al., 2013",DSBs are induced by IR.
+IR_FLIP,3,0,3,,
+JAK2,"floor(avg(EGFR,IL-R6)) + max(0,IL-R6-2) + max(0,EGFR-2)",0,3,"Johnson et al., 2018; Wee and Wang, 2017",Independent activation by EGFR and IL-R6.
+KEAP1,2,0,3,"Nguyen et al., 2009",Constituively activated unless mutated.
+KEAP1-CUL3-RBX1,"min(RBX1, min(CUL3, KEAP1))",0,3,"Thu et al., 2011","Ubiquitin ligase complex composed by KEAP1, CUL3 and RBX1."
+Ku,"avg(max(DSB, seDSB), 53BP1) * min(1, KU70)*min(1, KU80)",0,3,,Components of Ku complex are Ku70 and KU80. Activated by DSBs and 53BP1. 
+KU70,1,0,3,"Mari et al., 2006",Component of the Ku heterodimer.
+KU80,1,0,3,"Mari et al., 2006",Component of the Ku heterodimer.
+LIG4,1,0,3,"Gu et al., 2007",Component of the NHEJ Ligation Complex.
+LRP,avg(pos)-avg(neg),0,3,,
+LZTR1,CUL3-1,0,3,"Bigenzahn et al., 2018",Activated by CUL3.
+MAX,3,0,3,"Kato et al., 1992",Constitutively active unless mutated.
+MAXMGA,"min (MGA, MAX)",0,3,"Diolaiti et al., 2015",Activated by MAX and MGA; requires function of both these proteins for activity.
+MCL-1,"2 - ceil(avg(Bim,NOXA,PUMA,GSK3B)) + min(min(Akt,ERK),STAT3)",0,3,"Fennel and Swanton, 2012; Zhang et al., 2011; Song et al., 2005; Kang et al., 2017; Weerasinghe et al., 2007","Activated by Akt, ERK and STAT3; inhibited by Bim, NOXA, PUMA and GSK3B."
+MDC1,"max(DSB, seDSB) * min(1, ATM+max(0,min(1,STAT3-2)))*min(1,ATM)",0,3,"Eliezer et al., 2014",ATM-mediated phosphorylation of H2AX at double strand breaks is essential for MDC1 activation.
+MDM2,"3 - ceil(avg(ARF,RASSF1))",0,3,"Nag et al., 2016; Song et al., 2008",Inhibited by ARF and RASSF1.
+MEK,"RAF-max(0,min(1, 1-ELF3))",0,3,"Roberts and Der, 2007; Wang et al., 2018",Activated by RAF; inhibited by ELF3.
+MET,"HGF +(min(1, TCF)-1)",0,3,"Raghav et al., 2012; Singh et al., 2008; Boon et al., 2002",Activated by HGF and TCF; inhibited by MUC1.
+MGA,1,0,3,"Baudino and Cleveland, 2001",Inhibits MYCMAX through the MAXMGA heterodimer.
+Mitosis,"ceil(avg(CycB_CDK1,Plk1))",0,3,"Castedo et al., 2002; Gheghiani et al., 2017",Activated by CyclinB-CDK1 and Plk1.
+MOMP,avg(pos)-avg(neg),0,3,,
+MRE11,1,0,3,"Langerak et al., 2011",Component of the MRN complex.
+MRN,"min((MRE11), min (NBS1, RAD50)) * max(DSB, floor(avg(DSB, 53BP1)))",0,3,"Uziel et al., 2003; Lee et al., 2010","Composed of MRE11, NBS1 and RAD50; primarily activated by DSBs and also by 53BP1."
+mTORC1,3-TSC,0,3,"Tian et al., 2019",Inhibited by TSC.
+mTORC2,avg(pos)-avg(neg),0,3,,
+MUC1,"floor(avg(STAT3,GRB2,MET, 1))",0,3,"Gao et al., 2009;  Li et al., 2001; Singh et al., 2008","Activated by STAT3, GRB2 and MET."
+MYC,"ceil(avg(ERK, TCF, c-Jun)) - ceil(avg(GSK3B,4EBP1))*min(2,max(1,MycAmp))",0,3,"Duffy et al., 2021; Robertson et al., 2018; Lavoie et al., 2020; Barnhart et al., 2008; Yochum et al., 2009; Noguchi et al., 1999","Activated by ERK, STAT3 and B-catenin; inhibited by FOXO3, p53, GSK3B and 4EBP1."
+MycAmp,avg(pos)-avg(neg),,,,
+MYCMAX,"min(MYC, MAX) *  min(2, 3-(MAXMGA))",0,3,"Baudino et al., 2001",Requires both MYC and MAX activity; antagonised by MAXMGA.
+NBS1,"1 *min(1, MYCMAX)",0,3,"Kobayashi et al., 2004; Chiang et al., 2003",Component of the MRN complex; MYCMAX function essential for activity.
+NCID,avg(pos)-avg(neg),0,3,,"The ultimate event in Notch multiple proteolytic processing leads to the release in the nucleus of the activated form of Notch (intracellular Notch, or NotchIC)."
+Necrosis,"max(UrDSB, min(1,UrseDSB))",0,3,,Unrepaired DNA Double Strand Breaks result in Necrotic death.
+NF1,3-PKA,0,3,"Bergoug et al., 2020",PKA downregulates NF1 expression.
+NFkB,"ceil(avg(Akt,p90RSK, JAK2,MUC1))-floor(avg(p53,KEAP1-CUL3-RBX1))",0,3,"Lin et al., 2019;  Yang et al., 2015;  Chaturvedi et al., 2011;  Kucuksayan et al., 2016","Activated by Akt, p90RSK, JAK2 and MUC1; inhibited by p53 and KEAP1."
+NHEJ_Ligation_Complex,"DNA-PKcs * min(min(1, LIG4), min(XRCC4, XLF))",0,3,"Davis et al., 2014; Ahnesorg et al., 2006; ","Protein complex consists of XRCC4, XLF4 and LIG4; Activated by DNA-PKcs."
+NOTCH1,avg(pos)-avg(neg),0,3,,NOTCH1 only active in NSCLC in hypoxic conditions
+NOXA,avg(pos)-avg(neg),0,3,,
+NRF2,"3 - floor(avg(Fyn,KEAP1-CUL3-RBX1*2, Beta-TRCP)) + floor(avg(ERK,Akt))",0,3,"Barrera-Rodr�guez., 2018; Sparaneo et al., 2016","Activated by ERK and Akt; inhibited by Fyn and KEAP1. Another regulator of NRF2 is glycogen synthase kinase 3 beta (GSK-3_). This protein can phosphorylate _-TrCP, increasing the ability of _-TrCP to ubiquitinate NRF2."
+p15,3-MYCMAX,0,3,"Garc�a-Guti�rrez et al., 2019",Inhibited by MYCMAX.
+p16,CDKN2A -  YB1,0,2,"Chan et al., 2021",Inhibtied by YB1. Encoded by CDKN2A. 
+p21,"ceil(avg(NRF2, FOXO3, FOXM1) + p53) - floor(avg(max(MYCMAX-1, 0), CycD_CDK4, Akt, NRF2, GSK3B))",0,3,"Lee et al., 2008;  Li et al., 2018; Garc�a-Guti�rrez et al., 2019; Robertson et al., 2017; Tan et al., 2010","Activated by p53, FOXO3 and FOXM1; inhibited by MYCMAX, CycD_CDK4, Akt, NRF2 and GSK3B."
+p27,"(1 + FOXO3 - floor(avg(MYCMAX,Akt,p90RSK,CycE_CDK2,NRF2)))",0,3,"Chikkegowda et al..,2021;  Garc�a-Guti�rrez et al., 2019;  Nho and Hergert, 2014;  Sherr and Roberts, 1999;  Rao et al., 2017; Poomakkoth et al., 2016","Activated by FOXO3; inhibited by MYCMAX, Akt, p90RSK, Cyclin E_CDK2 and NF2."
+p27_amp,1,,,,
+p53,"3 - ceil(avg(MDM2, Twist, NCID)) + min(1, (min(min(CHK1,CHK2), min(AMPK, MUC1))))",0,3,"Thoreen and  Sabatini, 2005;  Ch�ne, 2003; Yang et al., 2005; Taylor and Stark, 2001; Piccinin et al., 2012","Activated by AMPK, CHK1, CHK2 and MUC1; inhibited by MDM2 and Twist. It is inhibited by NOTCH1 through the modulation of its stability at the posttranslational level."
+p70S6K,avg(pos)-avg(neg),0,3,,
+p90RSK,avg(pos)-avg(neg),0,3,,
+PALB2,avg(pos)-avg(neg),0,3,"Zhang et al., 2009",Activated by BRCA1.
+PI3K,"floor(avg(EGFR,EGFR,MET,JAK2,RAS,MUC1) - PTEN + Erbb3) * min(1,PIK3CA) + max(ELF3-1,0)",0,3,"Bidkhori et al., 2012; Martinez-Mart� and Felip, 2012; Hervieu and  Kermorgant, 2018; Bousoik and Montazeri Aliabadi, 2018; Shaw and Cantley, 2006; Engelman et al., 2007; Raina et al., 2011; Hao et al., 2021","Activated by EGFR, MET, JAK2, MUC1, IRS4, Erbb3 and RAS and inhibited by PTEN. PIK3CA encodes the catalytic subunit of PI3K and its function is essential to the activity of PI3K."
+PIK3CA,1,0,3,"Martinez-Mart� and Felip, 2012",Encodes catalytic subunit of PI3K.
+PKA,avg(pos)-avg(neg),0,3,"Caldwell et al., 2012",Activated by Erbb1 .
+Plk1,"2 -ceil(avg(p53, FOXO3))+ floor(avg(STIL, FOXM1))",0,3,Nestal de Moraes et al. 2016; Alvarez et al. 2001,"Activated by FOXM1 and STIL; inhibited by p53, FOXO3, p21."
+pRB,"2 - min(CycE_CDK2,CycD_CDK4)",0,3,"VanArsdale et al., 2015",Inibitied by CycE_CDK2 and CycD_CDK4.
+Proliferation,avg(pos)-avg(neg),0,3,,
+PTEN,"floor(avg(p53,MYCMAX)) - floor(avg(CBF, c-Jun))",0,3,"Stambolic et al., 2001; Hettinger et al., 2007",Activated by p53 and MYCMAX; inhibited by c-Jun. Notch signalling downregulates the expression of PTEN via the induction of hairy enhancer of split 1. 
+PTPRK,2,0,3,"Xu et al., 2019; Chang et al., 2020",Activates ZNRF3; inhibits STAT3.
+PTPRT,1,0,3,"Zhang et al., 2007",Activated by homodimerisation; activates STAT3.
+PUMA,"max(FOXO3, p53) *min(1, p53)",0,3,"Nakano and Vousden, 2001;  You et al., 2006; Wang et al., 2007",Activated by FOXO3 and p53. p53 function essential for activity.
+RAD50,1,0,3,"Dupr� et al., 2006",Component of the MRN complex.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAD51,"floor(min(BRCA2, RNF8_HR))",0,3,"Esashi et al., 2007; Nakada et al., 2012",Activated by BRCA2 and RNF8.
+RAF,avg(pos)-avg(neg),0,3,"Hao et al., 2021",Ras essential for activity. Activity further potentiated by IRS4.
+RAP80,avg(pos)-avg(neg),0,3,"Strauss and Goldberg, 2011",Recruited by MDC1 to DNA double strand breaks
+RAS,"SOS - max(0,(avg(NF1, LZTR1)-1))",0,3,"Boriack-Sjodin et al., 1998; Johnson et al., 1994",Activated by SOS; inhibited by NF1.
+RASSF1,avg(pos)-avg(neg),0,3,"Palakurthy et al., 2009",Inhibited by DNMT3B.
+RBX1,2,0,3,"Wei and Sun, 2010",Constitutively active unless mutated.
+RNF168,1,0,3,"Chen et al., 2021",Component of the RNF8/RNF168 ubiquitin ligase complex.
+RNF8,"MDC1*min(1, RNF168)",0,3,"Huen et al., 2007; Bartocci and Denchi, 2013",Activated by MDC1; acts in concurrence with RNF168 to promote accumulation of 53BP1.
+RNF8_HR,"RNF8 - max(0, 2*(1- min(1, BRCA1) - min(1, 53BP1)))",0,3,"Nakada et al., 2012",Both BRCA1 and 53BP1 must be absent for RNF8 to promote homologous recombination via RAD51.
+seDSB,avg(pos)-avg(neg),,,,
+self_renewal,avg(pos)-avg(neg),0,2,,
+Senescence,"avg(p21, p16) *min(1, p21)*min(1, p16)",0,3,,
+SFRP4,1,0,3,"Lee et al., 2008",Inhibits Wnt.
+SKP2,avg(pos)-avg(neg),0,3,"Lee et al., 2015",Activated by Ras
+SOS,avg(pos)-avg(neg),0,3,,
+SSB,"max(ceil(avg(Mitosis, IR)), IR)",0,3,"Mahaney et al., 2009; Crasta et al., 2012",Induced by ionising radiation and routinely occurs during mitosis.
+STAT3,"((floor(avg(JAK2,MET,EGFR)) + max(0,JAK2-2))) + max(0, 1-PTPRT)  + max(0, 1-PTPRK)",0,3,"Xu et al., 2019",Activated by JAK2 and MET; inhibited by PTPRK. The STAT3 transcription factor binds to activated MET through phosphorylated tyrosine residue Y1356 of MET. 
+STIL,1,0,3,"Erez et al., 2007; Castiel et al., 2011",Activates Plk1.
+STK11,"max(2, SKP2)",0,3,"Choi et al., 2015; Lee et al., 2015",Constituively activated unless mutated. Maximally activated by high SKP2 activity.
+TCF,avg(pos)-avg(neg),0,3,,
+toxic_NHEJ,"NHEJ_Ligation_Complex*min(1,UrseDSB)-G2_Repair",,,,
+TSC,"max(GSK3B,AMPK) - floor(avg(ERK,Akt,Akt,Akt,p90RSK)) + 1",0,3,"Corradetti et al., 2004; Vicary and Roman, 2016; Tian et al., 2019;  Saxton, 2017; Evangelisti et al., 2020;  Ma et  al., 2005","Activated by GSK3B and AMPK; inhibited by ERK, Akt and p90RSK."
+Twist,avg(pos)-avg(neg),0,3,"Howe et al., 2003",Activated by Wnt; inhibited by ZNRF3.
+UrDSB,"DSB-floor(avg(G2_Repair, NHEJ_Ligation_Complex))",0,3,"Mao et al., 2008; Seol et al., 2018","Unrepaired DNA double strand breaks are repaird by HR, NHEJ and MMEJ."
+UrseDSB,avg(pos)-avg(neg),,,,
+Wee1,"max(3-Plk1,floor(avg(CHK1,CHK2)))",0,3,"Watanabe et al., 2004","Activated by Plk1, CHK1 and CHK2."
+WNT,3-SFRP4,0,3,"Lee et al., 2008",Inhibited by SFRP4.
+XLF,1,0,3,,
+XRCC4,1,0,3,"Koch et al., 2004",Component of the NHEJ Ligation Complex.
+YB1,avg(pos)-avg(neg),0,3,,
+ZNRF3,avg(pos)-avg(neg),0,3,"Chang et al., 2020",Inhibits Frizzled.

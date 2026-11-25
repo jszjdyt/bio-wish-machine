@@ -1,0 +1,22 @@
+# dsh-nsclc-vt bundle layer.
+#
+# `dsh plugin --profile <name> add dsh-nsclc-vt` appends this layer to the
+# profile's `dsh.profile.bundles`. It inserts one row that mounts the plugin with
+# its shipped defaults. Override any field from the profile's own
+# `cordis.patch.yml` (a patch replaces the whole `config`, so restate every key
+# you keep):
+#
+#   - id: nsclc-vt
+#     config:
+#       modelPath: /absolute/path/to/another-bma-model.json
+#       phenotypes: [Proliferation, Death]
+#       maxAnalyses: 60000
+#       workers: 0
+#       promptGuidance: true
+#
+# The model is searched in this order: `modelPath` (defaults to the bundled
+# NSCLC-master.json), then the file itself. Use modelPath to point the tools at
+# a different BMA network — the engine and screens are model-agnostic.
+- insert:
+    - id: nsclc-vt
+      name: dsh-nsclc-vt

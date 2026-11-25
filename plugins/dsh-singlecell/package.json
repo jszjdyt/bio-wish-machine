@@ -1,0 +1,58 @@
+{
+  "name": "dsh-singlecell",
+  "version": "0.9.2",
+  "private": true,
+  "description": "单细胞分析工作台：在 Harness 里可视化地跑 QC→聚类→标记基因流程，Agent 可用同一套工具驱动分析。",
+  "icon": "icon.svg",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "lib/*.mjs",
+    "lib/*.py",
+    "lib/*.R",
+    "lib/external/**",
+    "test/make_sample.py",
+    "README.md",
+    "CONTRACT.md",
+    "requirements.txt",
+    "INSTALL.md",
+    "!lib/external/__pycache__/**",
+    "!lib/__pycache__/**",
+    "!lib/*.bak-*",
+    "!lib/impl.mjs.bak-*"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "single-cell",
+    "scrna-seq",
+    "scanpy",
+    "umap",
+    "clustering"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,53 @@
+{
+  "name": "dsh-nsclc-vt",
+  "version": "0.1.0",
+  "description": "NSCLC 'virtual tumor' for DeepSeek Harness: run the interpretable mechanistic model of Clarke et al. (Cancer Research 2026) in-process — steady-state prediction for any genotype, mono/pair therapeutic screens, and the manuscript's additivity ranking. No R, no BioCheckConsole, no Windows.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./engine": "./lib/vmcai.js",
+    "./analysis": "./lib/analysis.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "data",
+    "test",
+    "README.md",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "validate:published": "node test/validate-published.mjs"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "nsclc",
+    "virtual-tumor",
+    "biomodelanalyzer",
+    "vmcai",
+    "cancer-research",
+    "drug-combination",
+    "systems-biology"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.6",
+    "@deepseek-ai/schemastery": ">=3.18.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-tools": { "optional": true },
+    "@deepseek-ai/schemastery": { "optional": true }
+  }
+}
