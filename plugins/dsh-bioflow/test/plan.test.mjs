@@ -41,7 +41,7 @@ async function setupDataset(t, tag, samples) {
   }
   t.after(() => {
     impl.disposeRuntime(runtime)
-    fs.rmSync(root, { recursive: true, force: true })
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   })
   const registered = await impl.runTool(runtime, {
     action: 'register',

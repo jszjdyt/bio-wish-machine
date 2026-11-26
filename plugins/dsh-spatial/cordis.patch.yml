@@ -3,8 +3,9 @@
 # 加一个 Client 整页（main 槽 key=spatial，侧边栏 panellist 入口）。
 # id 与 name 必须等于包名 dsh-spatial：Client 模块 loader id 要与包名一致。
 # config.python：优先用装了 scanpy/squidpy 的专用解释器（没有就用宿主 python3 的降级实现）。
+# Windows：留空 config，让引擎自动探测 PATH 上的 python/py；如需专用环境可设置
+# DSH_SPATIAL_PYTHON 环境变量或在插件设置里填 python 路径。
 - insert:
     - id: dsh-spatial
       name: 'dsh-spatial'
-      config:
-        python: '/Users/dingyuntao/.dsh/runtimes/bio312/bin/python'
+      config: {}

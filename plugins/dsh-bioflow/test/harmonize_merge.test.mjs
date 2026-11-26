@@ -76,6 +76,6 @@ test('harmonize → merged dataset → plan 全链路（纯 JS）', async () => 
     assert.ok(plan.plan.steps.some((step) => step.step_id === 'de'))
   } finally {
     try { await impl.disposeRuntime(runtime) } catch { /* ignore */ }
-    rmSync(root, { recursive: true, force: true })
+    rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   }
 })

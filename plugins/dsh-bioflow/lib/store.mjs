@@ -135,7 +135,7 @@ export function readJsonIfExists(file) {
 }
 
 export function removeDir(dir) {
-  try { rmSync(dir, { recursive: true, force: true }) } catch { /* ignore */ }
+  try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) } catch { /* ignore */ }
 }
 
 export function cleanStaging(dir) {

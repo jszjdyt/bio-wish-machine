@@ -153,7 +153,7 @@ async function runBioflow(t, tag, options = {}) {
   }
   t.after(() => {
     impl.disposeRuntime(runtime)
-    fs.rmSync(root, { recursive: true, force: true })
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   })
 
   const registered = await impl.runTool(runtime, {
@@ -346,7 +346,7 @@ test('18c) 必选步骤失败时 run 目录也应有 manifest（已知缺口：�
 
 test('22) atomicMove 在普通路径下可用（staging → runDir 同盘 rename；跨设备 EXDEV 不可模拟）', (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-bioflow-deliver-move-'))
-  t.after(() => { fs.rmSync(root, { recursive: true, force: true }) })
+  t.after(() => { fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) })
 
   const source = path.join(root, '.staging', 'qc', 'qc_metrics.tsv')
   fs.mkdirSync(path.dirname(source), { recursive: true })

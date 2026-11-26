@@ -799,7 +799,7 @@ export /**
  * 所以 engines 删除带一次延迟重试（否则会留下空的 engines/<plugin> 目录被 audit 记成脏）。
  */
 async function cleanRunScratch(runDir, { keepEngines = false, aggressive = false } = {}) {
-  try { fs.rmSync(path.join(runDir, '.staging'), { recursive: true, force: true }) } catch { /* ignore */ }
+  try { fs.rmSync(path.join(runDir, '.staging'), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) } catch { /* ignore */ }
   if (keepEngines) return
   const engines = path.join(runDir, 'engines')
   // 取消/失败时 worker 是被 kill 的：它可能还在启动（例如 Matplotlib 建字体缓存），
@@ -807,14 +807,14 @@ async function cleanRunScratch(runDir, { keepEngines = false, aggressive = false
   const rounds = aggressive ? 12 : 1
   for (let round = 0; round < rounds; round += 1) {
     if (fs.existsSync(engines)) {
-      try { fs.rmSync(engines, { recursive: true, force: true }) } catch { /* 下一轮再试 */ }
+      try { fs.rmSync(engines, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) } catch { /* 下一轮再试 */ }
     }
     if (!aggressive) return
     // 不能「删掉就收工」：被 kill 的 worker 可能几十毫秒后又重建目录写日志。
     // 固定观察 ~3s，期间反复删除，最后一次删除之后自然结束。
     await new Promise((resolve) => setTimeout(resolve, 250))
   }
-  try { fs.rmSync(engines, { recursive: true, force: true }) } catch { /* ignore */ }
+  try { fs.rmSync(engines, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) } catch { /* ignore */ }
 }
 
 async function executeRun(runtime, store, runId, plan, dataset) {
@@ -1801,6 +1801,13 @@ async function opHealth(runtime, store, args) {
   }
 }
 
+/** files 参数归一化：CLI 的逗号串、工具的数组、空值 → 数组或 null。 */
+export function normalizeFileList(files) {
+  if (Array.isArray(files)) return files.map((item) => String(item || '').trim()).filter(Boolean)
+  if (typeof files === 'string') return files.split(',').map((item) => item.trim()).filter(Boolean)
+  return null
+}
+
 async function opDownload(runtime, store, args) {
   const source = String(args.source || '').toLowerCase()
   const id = args.id || args.gse || args.accession || args.project_id
@@ -1817,7 +1824,7 @@ async function opDownload(runtime, store, args) {
   try {
     result = await S.executeDownload({
       store, downloader, sourcesClient, source, id, destDir,
-      files: args.files || null, pluginDownload, includeClinical: args.include_clinical !== false,
+      files: normalizeFileList(args.files), pluginDownload, includeClinical: args.include_clinical !== false,
     })
   } catch (error) {
     if (error && error.code === 'source_unavailable') {
@@ -2485,7 +2492,7 @@ async function opDelete(runtime, store, args) {
     let trashedTo = null
     if (fs.existsSync(runDir)) {
       if (purge) {
-        fs.rmSync(runDir, { recursive: true, force: true })
+        fs.rmSync(runDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
       } else {
         trashedTo = path.join(store.dirs.root, 'trash', 'runs', runId)
         ensureDir(path.dirname(trashedTo))
@@ -3090,7 +3097,7 @@ async function opTrash(runtime, store, args) {
     if (!runId) throw storeError('bad_request', 'trash purge 需要 run_id（或 id）')
     const entry = readEntry(runId)
     if (!fs.existsSync(entry.dir)) throw storeError('not_found', `回收站里没有 run：${runId}`)
-    fs.rmSync(entry.dir, { recursive: true, force: true })
+    fs.rmSync(entry.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     store.logEvent('trash', 'purge', { run_id: runId })
     return { ok: true, action: 'trash', op: 'purge', purged: runId, summary: `已彻底删除 run ${runId}（不可恢复）` }
   }
@@ -3100,7 +3107,7 @@ async function opTrash(runtime, store, args) {
       for (const name of fs.readdirSync(trashRoot)) {
         const target = path.join(trashRoot, name)
         try {
-          if (fs.statSync(target).isDirectory()) { fs.rmSync(target, { recursive: true, force: true }); count += 1 }
+          if (fs.statSync(target).isDirectory()) { fs.rmSync(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); count += 1 }
         } catch { /* ignore */ }
       }
     }

@@ -75,7 +75,7 @@ test('paper_pdf：真实 PDF → 图注 + 内嵌图 → 多模态识别', async 
     assert.ok(figure.image_path && existsSync(figure.image_path), '抽出的图应落盘')
     assert.match(String(figure.image_url), /^\/bioflow\/files\/uploads\/figures\//)
     assert.equal(result.model.vision, true)
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('paper_pdf：矢量图/无位图 → 退化为图注拆解并注明原因', async () => {
@@ -89,5 +89,5 @@ test('paper_pdf：矢量图/无位图 → 退化为图注拆解并注明原因',
     assert.equal(result.figures[0].chart, 'volcano')
     assert.equal(result.figures[0].image_path, null)
     assert.ok(result.notes.some((note) => note.includes('矢量图') || note.includes('没抽到位图')))
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })

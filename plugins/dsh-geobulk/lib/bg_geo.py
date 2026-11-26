@@ -1138,6 +1138,38 @@ def _summary_for_gse(gse: str) -> dict:
     raise EngineError("not_found", f"GEO 系列 {gse} 不存在或 NCBI 没有返回摘要")
 
 
+# 默认下载的排除名单：比对/测序原始读段与芯片原始信号不属于表达分析默认包
+_SUPPL_EXCLUDE_RE = re.compile(
+    r"(?:filelist\.txt$|\.bam$|\.bai$|\.cram$|\.fastq(?:\.gz)?$|\.fq(?:\.gz)?$|"
+    r"\.cel$|\.idat$|\.bed(?:\.gz)?$|\.bigwig$|\.bw$|\.vcf(?:\.gz)?$)",
+    re.IGNORECASE,
+)
+
+
+def _default_download_files(files: list, gdstype: str = "") -> list:
+    """默认下载清单：series matrix +（测序类系列）补充数据文件。
+
+    HTS（高通量测序）系列的 series matrix 不含表达值，真正的数据在 suppl/
+    （RAW.tar、count 矩阵、10x 三件套等）；芯片系列的 series matrix 本身就是
+    数据，维持只下 series matrix 的旧行为。bam/fastq/cel 等原始信号一律排除。
+    """
+    names: list = []
+    matrix = next((item["name"] for item in files if item.get("kind") == SERIES_MATRIX_KIND), "")
+    if not matrix and files:
+        matrix = files[0]["name"]
+    if matrix:
+        names.append(matrix)
+    if "high throughput sequencing" in str(gdstype).lower():
+        for item in files:
+            name = str(item.get("name") or "")
+            if not name or name in names or item.get("kind") == SERIES_MATRIX_KIND:
+                continue
+            if _SUPPL_EXCLUDE_RE.search(name):
+                continue
+            names.append(name)
+    return names
+
+
 def geo_detail(gse) -> dict:
     """GEO 系列详情（摘要 + 目录文件列表 + 系列矩阵头部抽取的临床字段）。"""
     gse = _norm_gse(gse)
@@ -1165,6 +1197,7 @@ def geo_detail(gse) -> dict:
         "platforms": _platforms(record.get("gpl")),
         "pubmed": ", ".join(pubmed_ids),
         "release": _norm_date(record.get("pdat")),
+        "gdstype": str(record.get("gdstype") or ""),
         "contacts": header.get("contacts") or "",
         "clinical": {
             "from_series_matrix": bool(clinical_fields),
@@ -1185,6 +1218,7 @@ def geo_detail(gse) -> dict:
     if not result["suggested"] and files:
         result["suggested"] = files[0]["name"]
     result["has_matrix"] = bool(result["suggested"])
+    result["suggested_files"] = _default_download_files(files, result["gdstype"])
     result["has_clinical"] = bool(clinical_fields) or _looks_clinical(f"{title} {summary}")
     result["disease"] = _detect_disease(title, summary)
     result["tags"] = _make_tags(title, summary, species, str(record.get("gdstype") or ""),
@@ -1205,7 +1239,8 @@ def _check_dest_dir(dest_dir) -> str:
     if not os.path.isabs(path):
         raise EngineError("bad_request", f"dest_dir 必须是绝对路径：{dest_dir!r}（示例：/Users/you/GEO）")
     path = os.path.abspath(path)
-    if path == os.path.sep or path == "/":
+    if path == os.path.sep or path == "/" or (os.name == "nt" and re.fullmatch(r"[A-Za-z]:\\?", path)):
+        # Windows 上 abspath("/") 会变成 "C:\"，驱动器根同样必须拦下
         raise EngineError("bad_request", "不能直接下载到文件系统根目录 /，请指定子目录")
     if os.path.exists(path) and not os.path.isdir(path):
         raise EngineError("bad_request", f"dest_dir 已经是文件而不是目录：{path}")
@@ -1409,9 +1444,12 @@ def geo_download(gse, files, dest_dir, overwrite=False, progress=None) -> dict:
     _emit(progress, f"正在获取 {gse} 的文件列表", 1)
 
     detail_files: list[dict] = []
+    detail_suggested: list[str] = []
     detail_error: EngineError | None = None
     try:
-        detail_files = geo_detail(gse).get("files") or []
+        detail = geo_detail(gse)
+        detail_files = detail.get("files") or []
+        detail_suggested = [str(name) for name in (detail.get("suggested_files") or []) if str(name).strip()]
     except EngineError as error:
         if error.code == "not_found":
             raise
@@ -1419,16 +1457,20 @@ def geo_download(gse, files, dest_dir, overwrite=False, progress=None) -> dict:
 
     by_name = {item["name"]: item for item in detail_files}
     if not requested:
-        suggested = next((item["name"] for item in detail_files
-                          if item.get("kind") == SERIES_MATRIX_KIND), "")
-        if not suggested and detail_files:
-            suggested = detail_files[0]["name"]
-        if not suggested:
-            raise EngineError(
-                "not_found",
-                f"{gse} 在 GEO FTP 上没有可下载文件（matrix/ 与 suppl/ 都为空）",
-            )
-        requested = [suggested]
+        if detail_suggested:
+            # HTS 系列默认包含补充数据文件（见 _default_download_files）；芯片系列仍只有 series matrix
+            requested = list(detail_suggested)
+        else:
+            suggested = next((item["name"] for item in detail_files
+                              if item.get("kind") == SERIES_MATRIX_KIND), "")
+            if not suggested and detail_files:
+                suggested = detail_files[0]["name"]
+            if not suggested:
+                raise EngineError(
+                    "not_found",
+                    f"{gse} 在 GEO FTP 上没有可下载文件（matrix/ 与 suppl/ 都为空）",
+                )
+            requested = [suggested]
 
     plan: list[dict] = []
     unknown: list[str] = []

@@ -1325,7 +1325,7 @@ export async function runTool(runtime, args = {}) {
     case 'detail': {
       const result = await opGeoDetail(runtime, { ...args, actor })
       return {
-        message: `${result.gse}：${result.n_samples || '?'} 样本，${(result.files || []).length} 个补充文件，建议下载 ${result.suggested || '—'}`,
+        message: `${result.gse}：${result.n_samples || '?'} 样本，${(result.files || []).length} 个补充文件，建议下载 ${(Array.isArray(result.suggested_files) && result.suggested_files.length ? result.suggested_files.join('、') : result.suggested) || '—'}`,
         ...result,
       }
     }

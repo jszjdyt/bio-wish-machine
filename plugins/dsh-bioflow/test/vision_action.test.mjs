@@ -72,7 +72,7 @@ test('figure_from_image：图片交给多模态模型，输出结构化蓝图', 
     assert.equal(mock.calls.stream.length, 1)
     assert.ok(mock.calls.stream[0].messages[0].content.some((part) => part.type === 'image'), '消息里必须带 image 块')
     assert.ok(result.image_path && existsSync(result.image_path), '上传图片应落盘留痕')
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('figure_from_image：模型不支持图片时明确报错，不乱猜', async () => {
@@ -84,7 +84,7 @@ test('figure_from_image：模型不支持图片时明确报错，不乱猜', asy
     assert.equal(result.ok, false)
     assert.equal(result.error, 'unsupported')
     assert.match(String(result.message), /多模态|图片输入/)
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('figure_from_image：模型返回非 JSON 时降级为规则分类，并保留原文', async () => {
@@ -97,5 +97,5 @@ test('figure_from_image：模型返回非 JSON 时降级为规则分类，并保
     assert.equal(result.figures[0].recognized_by, 'vision')
     assert.equal(result.figures[0].chart, 'km')
     assert.ok(String(result.figures[0].raw_text).includes('Kaplan-Meier'))
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })

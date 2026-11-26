@@ -9,7 +9,7 @@
  */
 
 import path from 'node:path'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import {
   atomicWriteJson, ensureDir, fileSize, nowIso, safeName, sha256File, sha256Json, stableStringify,
 } from './store.mjs'
@@ -109,7 +109,7 @@ export function loadSearchResults(store, searchId) {
 function requireStore() {
   // 避免顶层循环：这里只用到一个小工具
   return { readJsonIfExists: (file) => {
-    try { return JSON.parse(require('node:fs').readFileSync(file, 'utf8')) } catch { return null }
+    try { return JSON.parse(readFileSync(file, 'utf8')) } catch { return null }
   } }
 }
 
@@ -126,7 +126,7 @@ export async function resolveDownloadTasks({ source, id, sourcesClient, pluginDo
     if (typeof pluginDownload !== 'function') {
       throw searchError('unsupported', 'GEO 下载需要 geobulk 插件引擎（geo_download）；插件不可用时请手动下载后用 action=register', { source: 'geo', id })
     }
-    return { source: sourceId, id, mode: 'plugin', plugin: 'geobulk', action: 'download', params: { gse: String(id).toUpperCase(), destDir }, note: '由 geobulk 引擎 geo_download 处理（断点/限流/哈希由插件负责，bioflow 之后复核 sha256）' }
+    return { source: sourceId, id, mode: 'plugin', plugin: 'geobulk', action: 'download', params: { gse: String(id).toUpperCase(), dest_dir: destDir, ...(Array.isArray(files) && files.length ? { files } : {}) }, note: '由 geobulk 引擎 geo_download 处理（断点/限流/哈希由插件负责，bioflow 之后复核 sha256）' }
   }
   if (sourceId === 'metabolights') {
     if (typeof pluginDownload === 'function') {
@@ -223,9 +223,31 @@ export async function executeDownload({
   if (resolved.mode === 'plugin') {
     const before = new Set(listFilesRecursive(destDir))
     const result = await pluginDownload(resolved.plugin, resolved.action, resolved.params, { signal })
+    if (result && result.ok === false) {
+      return {
+        ok: false, source: resolved.source, id: resolved.id, mode: 'plugin',
+        downloads: [], artifacts: [], engine_result: summarizeEngineResult(result),
+        error: {
+          code: (result.error && result.error.code) || 'engine_error',
+          message: (result.error && result.error.message) || `${resolved.plugin} 引擎下载失败`,
+        },
+      }
+    }
     const after = listFilesRecursive(destDir)
     const newFiles = after.filter((file) => !before.has(file))
     const candidates = newFiles.length ? newFiles : after
+    if (!candidates.length) {
+      // 静默成功 = 撒谎：引擎没报错但目标目录一个文件都没有，必须红着回来
+      return {
+        ok: false, source: resolved.source, id: resolved.id, mode: 'plugin',
+        downloads: [], artifacts: [], engine_result: summarizeEngineResult(result),
+        error: {
+          code: 'no_files',
+          message: `${resolved.plugin} 引擎报告完成，但 ${destDir} 下没有任何文件（可能下载到了引擎默认目录或参数未透传）`,
+          dest_dir: destDir,
+        },
+      }
+    }
     for (const file of candidates) {
       const sha256 = await sha256File(file)
       const meta = {
@@ -292,8 +314,7 @@ function listFilesRecursive(dir) {
   const out = []
   const walk = (current) => {
     if (!existsSync(current)) return
-    const fs = require('node:fs')
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
       const full = path.join(current, entry.name)
       if (entry.isDirectory()) walk(full)
       else if (entry.isFile()) out.push(full)

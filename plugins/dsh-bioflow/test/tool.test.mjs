@@ -31,7 +31,7 @@ function makeRuntime() {
     },
   }
   const runtime = { version: 'test', config: { dataDir: dir }, ctx, invocation: 'test' }
-  return { runtime, registered, dir, cleanup: () => rmSync(dir, { recursive: true, force: true }) }
+  return { runtime, registered, dir, cleanup: () => { impl.disposeRuntime(runtime); rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) } }
 }
 
 test('工具接线：注册名 bioflow，action 枚举与 ACTIONS 完全一致', () => {

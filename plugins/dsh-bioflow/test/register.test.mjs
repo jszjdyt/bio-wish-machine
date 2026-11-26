@@ -51,7 +51,7 @@ function setupWorkspace(t, tag) {
   }
   t.after(() => {
     impl.disposeRuntime(runtime)
-    fs.rmSync(root, { recursive: true, force: true })
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   })
   return { root, dataDir, matrixPath, sampleSheetPath, runtime }
 }

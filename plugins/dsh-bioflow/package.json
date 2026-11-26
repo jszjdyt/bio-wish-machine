@@ -1,6 +1,6 @@
 {
   "name": "dsh-bioflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "许愿式生物信息全自动分析平台（DSH Host 插件 dsh-bioflow）：自然语言许愿式分析、GEO/PubMed/GDC-TCGA/MetaboLights/CELLxGENE 检索、统一下载、多数据归一化与联合分析、按 run_id 不可变的交付物（manifest/design/results/figures/evidence/methods）。",
   "license": "MIT",
   "author": "jszjdyt",

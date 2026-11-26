@@ -202,7 +202,7 @@ function assertMinGaps(times, burst, minGap, label = '') {
 }
 
 after(() => {
-  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true })
+  for (const dir of tempDirs) rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
 })
 
 // ---------------------------------------------------------------------------

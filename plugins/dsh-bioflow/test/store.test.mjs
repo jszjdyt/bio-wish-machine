@@ -26,7 +26,7 @@ function makeWorkspace(t, tag) {
     for (const store of opened.reverse()) {
       try { store.close() } catch { /* ignore */ }
     }
-    fs.rmSync(root, { recursive: true, force: true })
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   })
   return {
     root,

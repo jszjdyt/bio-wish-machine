@@ -114,7 +114,7 @@ async function runBioflow(t, tag) {
   }
   t.after(() => {
     impl.disposeRuntime(runtime)
-    fs.rmSync(root, { recursive: true, force: true })
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   })
 
   const registered = await impl.runTool(runtime, {
@@ -224,8 +224,14 @@ test('21) 重启（新 runtime/store 实例）后仍能按 run_id 查到导出�
 
   // 新 runtime 实例：同一 dataDir，模拟进程重启后只剩落盘状态
   const restarted = { version: 'test', invocation: 'test', config: { dataDir: context.storeRoot } }
-  t.after(() => impl.disposeRuntime(restarted))
-  const after = await impl.runTool(restarted, { action: 'export', run_id: context.runId })
+  // Windows：必须在 runBioflow 的 t.after 删 root 之前关掉这个 runtime 的 sqlite 句柄，
+  // 所以用 try/finally 就地 dispose，不依赖 after 钩子顺序。
+  let after
+  try {
+    after = await impl.runTool(restarted, { action: 'export', run_id: context.runId })
+  } finally {
+    impl.disposeRuntime(restarted)
+  }
 
   assert.equal(after.ok, true, '重启后必须能按 run_id 导出')
   assert.equal(after.export.run_id, context.runId)

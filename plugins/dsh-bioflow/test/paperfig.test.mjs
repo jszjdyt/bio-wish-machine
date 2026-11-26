@@ -70,5 +70,5 @@ test('action=paper_figures：粘贴图注直接出蓝图（不联网）', async 
     assert.equal(result.figures[0].chart, 'km')
     assert.equal(result.figures[0].plotlab_chart, 'km')
     assert.ok(result.figures[0].wish_text.includes('Kaplan-Meier'))
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { impl.disposeRuntime(runtime); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })

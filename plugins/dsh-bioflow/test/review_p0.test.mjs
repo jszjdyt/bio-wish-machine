@@ -12,8 +12,20 @@ import * as impl from '../lib/impl.mjs'
 import { Store } from '../lib/store.mjs'
 import { evaluateGates, buildPlan } from '../lib/plan.mjs'
 
+const liveRuntimes = []
+
 function runtimeWith(dir) {
-  return { version: 'test', config: { dataDir: dir }, invocation: 'test' }
+  const runtime = { version: 'test', config: { dataDir: dir }, invocation: 'test' }
+  liveRuntimes.push(runtime)
+  return runtime
+}
+
+/** Windows：删临时目录前必须先关 sqlite 句柄，否则 rmSync EPERM。disposeRuntime 幂等。 */
+function disposeAllRuntimes() {
+  while (liveRuntimes.length) {
+    const runtime = liveRuntimes.pop()
+    try { impl.disposeRuntime(runtime) } catch { /* ignore */ }
+  }
 }
 
 /** genes × samples 矩阵（正向：transpose=true）。 */
@@ -66,7 +78,7 @@ test('尺度：非负整数→counts(verified)；负整数/小数→疑似 log �
     const negDataset = await register(runtimeWith(path.join(root, 'neg-root')), negative, sheet)
     assert.notEqual(negDataset.scale.type, 'counts', '负整数不能被当成 counts')
     assert.equal(negDataset.scale.verified, false, '负整数必须等用户确认尺度')
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { disposeAllRuntimes(); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('矩阵方向：样本×基因矩阵（transpose=false）不拿基因列去对样本表', async () => {
@@ -81,7 +93,7 @@ test('矩阵方向：样本×基因矩阵（transpose=false）不拿基因列去
     assert.deepEqual(dataset.design.unresolved, [], `身份核对误判：${dataset.design.unresolved.slice(0, 5).join('、')}`)
     const plan = buildPlan({ dataset, template: 'bulk-two-group', params: { contrast: { case: 'tumor', control: 'normal' } } })
     assert.equal(plan.status, 'ready', `方向正确时 plan 应 ready：${(plan.blocking || []).map((gate) => gate.id + ':' + gate.detail).join('；')}`)
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { disposeAllRuntimes(); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('合并前检查：A 全肿瘤 / B 全正常 → harmonize 直接拦截，不生成跨队列推断', async () => {
@@ -97,7 +109,7 @@ test('合并前检查：A 全肿瘤 / B 全正常 → harmonize 直接拦截，�
     assert.equal(result.status, 'blocked')
     assert.ok(Array.isArray(result.blocking) && result.blocking.some((gate) => gate.id === 'dataset_confounded'))
     assert.equal(result.merged_dataset_id || null, null)
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { disposeAllRuntimes(); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('合并映射：两个队列重复样本名 S1–S4，逐队列回填分组，不得串组', async () => {
@@ -121,7 +133,7 @@ test('合并映射：两个队列重复样本名 S1–S4，逐队列回填分组
     assert.equal(groupOf(`${b.dataset_id}:S2`), 'normal', 'B 队列 S2 不能被 A 的分组覆盖')
     assert.equal(groupOf(`${b.dataset_id}:S3`), 'tumor')
     assert.equal(merged.design.source_mapping.length, 8)
-  } finally { rmSync(root, { recursive: true, force: true }) }
+  } finally { disposeAllRuntimes(); rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) }
 })
 
 test('闸门人话：失败闸门带 fixes 补救动作', () => {
