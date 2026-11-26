@@ -33,11 +33,12 @@
 - **接着做**：run 成功后自动给「顺着结果继续许愿」（QC/批次、趋势 Top 基因、独立队列验证、TCGA 生存、单细胞表达）；零显著明确写「当前阈值下 0 项显著」。
 - **高危修复**：点名未登记的 GSE/TCGA 不再静默用本地数据顶替；矩阵方向与样本身份核对共用同一轴；负整数/小数不再自动标 `counts/verified`；队列×分组完全混杂时 harmonize 前置拦截；合并样本按 `dataset_id:原样本名` 逐队列回填并做样本数守恒校验；单细胞无供体列不再生成伪重复 pseudobulk。
 - 中文输入法选词按 Enter 不会误提交；下载按钮语义改为「停止等待」。
+- **论文拆图**：`paper_figures` —— 给 PMID（PMC 开放全文）/DOI/本地 PDF/粘贴图注，拆出图注并判断图型（KM/森林/火山/热图/UMAP/富集/ROC…），给出需要的数据、建议模板、plotlab 图表与一句可执行许愿；只读图注、不做图像识别，认不出就说 unknown。
 - **视觉减负**：修掉 `.bf-progress` 类名冲突导致的巨型圆角块；「进度与产物」改成扁平细线（无 run 时只有一行提示，有 run 才出现内联统计与 4px 细进度条）；顶栏健康灯改成暗色背景上的低调文字「数据源 x/5 · 工作台 y/6」。
 - **回收站**：删除的 run 先移入 `trash/runs/`，顶栏/历史 run 面板的「回收站」可查看、**恢复**（重建索引，可继续看结果）或**彻底删除/清空**；对应 `bioflow action=trash trash_op=list|restore|purge|empty` 与 CLI `bioflow trash --trash-op=...`。
 - **页面减负**：顶栏健康灯收成一行「数据源 5/5 · 工作台 6/6」；示例/常用套路默认折叠；没有计划/run 时不再显示空白流水线；历史 run 空态压成一行。
 
-回归：`node --test plugins/dsh-bioflow/test/*.test.mjs` → **64 项 / 63 通过 / 1 skip / 0 失败**（新增 `review_p0` 与 `harmonize_merge`）。
+回归：`node --test plugins/dsh-bioflow/test/*.test.mjs` → **68 项 / 67 通过 / 1 skip / 0 失败**（新增 `review_p0` 与 `harmonize_merge`）。
 
 ---
 
@@ -136,7 +137,7 @@ node plugins/dsh-bioflow/bin/bioflow.mjs health            # geo/pubmed/gdc/meta
 node plugins/dsh-bioflow/bin/bioflow.mjs audit --json
 ```
 
-本次交付前，我们跑过：**43 个 P0 反例测试全绿**、新增 5 项评审回归（尺度/方向/混杂/串组/闸门补救）全绿、六个插件既有回归（GEO Bulk 150/31/41/94/54/14/40、SingleCell 36/10893 断言、Spatial pipeline、Metabolomics 138/89、PlotLab 204、VirtualCell 8/11/23）全绿，以及许愿机自身的 **64 项测试（63 通过 / 1 skip）**与真实端到端（两个 bulk 合并 → `ds_harm_*` → 7/7 步 succeeded、31 个产物、41 条证据）。
+本次交付前，我们跑过：**43 个 P0 反例测试全绿**、新增 5 项评审回归（尺度/方向/混杂/串组/闸门补救）全绿、六个插件既有回归（GEO Bulk 150/31/41/94/54/14/40、SingleCell 36/10893 断言、Spatial pipeline、Metabolomics 138/89、PlotLab 204、VirtualCell 8/11/23）全绿，以及许愿机自身的 **68 项测试（67 通过 / 1 skip）**与真实端到端（两个 bulk 合并 → `ds_harm_*` → 7/7 步 succeeded、31 个产物、41 条证据）。
 
 ---
 
