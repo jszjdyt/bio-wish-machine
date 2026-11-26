@@ -3,7 +3,8 @@
 一句话说人话，让 agent 把「找数据 → 下载 → 立项 → 跑分析 → 出图 → 留证」整条链跑完。
 包装了 7 个生信工作台 + 1 个统一入口（许愿机本体），全部跑在 DSH 桌面版里。
 
-> 版本：0.1.0 · 平台：macOS（Apple Silicon / Intel 均可）· 需要 DeepSeek Harness 桌面版
+> 版本：0.2.0 · 平台：macOS（Apple Silicon / Intel 均可）· 需要 DeepSeek Harness 桌面版
+> 最新代码：<https://github.com/jszjdyt/dsh-bioflow> · 本仓库为可安装合集（含插件源码快照）
 
 ---
 
@@ -11,7 +12,7 @@
 
 | 插件 | 干什么 |
 |---|---|
-| **dsh-bioflow**（许愿式生物信息全自动分析平台） | 统一入口。自然语言许愿 → draft 计划（不直接跑）→ 确认 → 提交 → 监控 → 导出；GEO/PubMed/GDC-TCGA/MetaboLights/CELLxGENE 检索、统一下载、多数据归一化、联合分析 |
+| **dsh-bioflow**（许愿式生物信息全自动分析平台） | 统一入口。自然语言许愿 / 疾病引导 / 问题入手 → 自动挑数据（中文摘要弹窗）→ draft 计划（先给提案，人只检查）→ 确认 → 不可变 run → 产物与证据；GEO/PubMed/GDC-TCGA/MetaboLights/CELLxGENE 检索、统一下载、多数据集去批次合并（`ds_harm_*`）、联合分析、删除与导出 |
 | dsh-geobulk | GEO Bulk：检索/下载/导入、QC、差异表达（DESeq2/edgeR/limma-voom）、富集、免疫浸润、生存与预后、circRNA/miRNA/lncRNA/融合/剪接 |
 | dsh-singlecell | 单细胞：QC、聚类、UMAP、标记基因、注释、供体级 pseudobulk（edgeR QL）、组成分析、轨迹、细胞通讯 |
 | dsh-spatial | 空间转录组：Visium/Stereo-seq 导入、空间域、SVG（Moran's I）、邻域富集、反卷积 |
@@ -19,6 +20,21 @@
 | dsh-plotlab | 绘图工作台：22 种图、一句话出图、统计检验、300dpi PNG + 可复现代码 |
 | dsh-virtualcell | 虚拟细胞：状态表征、GRN、虚拟敲除/过表达、扰动响应预测、状态转移 |
 | dsh-nsclc-vt | NSCLC 虚拟试验：组合干预排名（产物标为模型预测，不是实验结论） |
+
+---
+
+## 本轮更新（0.2.0 · 2026-11-26）
+
+依据两份评审（UX review / 产品升级方案）重做了许愿交互，并修掉 4 个会改变结果的高危缺陷：
+
+- **四种起手式**：我有数据 / 我只有方向 / 帮我找数据 / 照着图来（6 张出图样式卡，选图反推所需数据与分组）。
+- **活体愿望卡**：绿/黄/红体检灯 + 待定字段 + 每条闸门的中文补救动作；缺字段时**一次只问一个问题**（2–4 个可点候选）。
+- **数据选择**：许愿后自动弹「候选数据集（中文摘要）」，写明物种/样本量/模态/分组/矩阵/临床/适合做什么/风险；疾病引导里本地与在线（GEO/TCGA-GDC/MetaboLights）都可直接选，在线选中**自动下载+登记**；本地/在线追加多个数据时自动区分「同类型→先去批次合并」「不同类型→一脉相承」。
+- **接着做**：run 成功后自动给「顺着结果继续许愿」（QC/批次、趋势 Top 基因、独立队列验证、TCGA 生存、单细胞表达）；零显著明确写「当前阈值下 0 项显著」。
+- **高危修复**：点名未登记的 GSE/TCGA 不再静默用本地数据顶替；矩阵方向与样本身份核对共用同一轴；负整数/小数不再自动标 `counts/verified`；队列×分组完全混杂时 harmonize 前置拦截；合并样本按 `dataset_id:原样本名` 逐队列回填并做样本数守恒校验；单细胞无供体列不再生成伪重复 pseudobulk。
+- 中文输入法选词按 Enter 不会误提交；下载按钮语义改为「停止等待」。
+
+回归：`node --test plugins/dsh-bioflow/test/*.test.mjs` → **64 项 / 63 通过 / 1 skip / 0 失败**（新增 `review_p0` 与 `harmonize_merge`）。
 
 ---
 
@@ -74,6 +90,10 @@ node plugins/dsh-bioflow/bin/bioflow.mjs status --json
 node plugins/dsh-bioflow/bin/bioflow.mjs search --query="gastric cancer liver metastasis" --sources=pubmed,gdc
 node plugins/dsh-bioflow/bin/bioflow.mjs health          # 五个数据源健康灯
 node plugins/dsh-bioflow/bin/bioflow.mjs templates       # 六个分析模板
+node plugins/dsh-bioflow/bin/bioflow.mjs advise --need="胃癌肝转移 单细胞 NK 细胞"   # AI 挑数据（打分+中文摘要+下一步）
+node plugins/dsh-bioflow/bin/bioflow.mjs topics --disease="胃癌肝转移"               # 候选临床问题 + 近两年综述热点
+node plugins/dsh-bioflow/bin/bioflow.mjs harmonize --dataset-ids='["ds_a","ds_b"]' --method=quantile
+node plugins/dsh-bioflow/bin/bioflow.mjs suggest-next --run-id=<run_id>              # 顺着结果继续许愿
 ```
 
 ---
@@ -94,7 +114,7 @@ node plugins/dsh-bioflow/bin/bioflow.mjs templates       # 六个分析模板
 2. **矩阵宽表不能直接出图**：矩阵会被读成「基因 + 样本列」，需要先转成 tidy（一行一个观测）再出图。
 3. **数据集身份包含 data_kind**：同一份文件按 matrix 与 tidy 注册会得到两个不同数据集，这是有意的。
 4. **单细胞组成分析目前只有单一分母**（全部合格细胞）；「NK / 全部合格免疫细胞」双分母尚未实现，表注已固定写明当前口径。
-5. **批次与分组完全混杂时不会前置拒绝**，而是降级并记录 `fallback_reason`——看 `metrics.method_actual` 就知道实际用了什么方法。
+5. **队列×分组完全混杂现在会前置拦截**：`harmonize` 若发现每个队列只有一组且分属不同组，直接 `status=blocked`（`dataset_confounded`），不再生成可跨队列推断的合并集；历史上用旧逻辑生成的合并集需从原始队列重建。
 6. **旧虚拟细胞状态需重跑**：早期结果没有保存 HVG 的 mean/std，投影量纲会降级并给 warning。
 7. R 侧依赖（edgeR/limma/Seurat）缺失时功能降级而非报错，报告里一定写明实际方法。
 
@@ -113,7 +133,7 @@ node plugins/dsh-bioflow/bin/bioflow.mjs health            # geo/pubmed/gdc/meta
 node plugins/dsh-bioflow/bin/bioflow.mjs audit --json
 ```
 
-本次交付前，我们跑过：**43 个 P0 反例测试全绿**、六个插件既有回归（GEO Bulk 150/31/41/94/54/14/40、SingleCell 36/10893 断言、Spatial pipeline、Metabolomics 138/89、PlotLab 204、VirtualCell 8/11/23）全绿，以及许愿机自身的 59 项测试与一次真实端到端（tidy 表 → 计划 → 提交 → 出 PNG）。
+本次交付前，我们跑过：**43 个 P0 反例测试全绿**、新增 5 项评审回归（尺度/方向/混杂/串组/闸门补救）全绿、六个插件既有回归（GEO Bulk 150/31/41/94/54/14/40、SingleCell 36/10893 断言、Spatial pipeline、Metabolomics 138/89、PlotLab 204、VirtualCell 8/11/23）全绿，以及许愿机自身的 **64 项测试（63 通过 / 1 skip）**与真实端到端（两个 bulk 合并 → `ds_harm_*` → 7/7 步 succeeded、31 个产物、41 条证据）。
 
 ---
 

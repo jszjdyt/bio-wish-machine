@@ -40,7 +40,7 @@ export const ACTIONS = [
   'status', 'templates', 'search', 'source_detail', 'health', 'download',
   'register', 'datasets', 'ask', 'plan', 'submit', 'runs', 'run_status', 'cancel',
   'export', 'evidence', 'methods', 'audit', 'suggest', 'harmonize', 'joint',
-  'delete', 'settings',
+  'delete', 'settings', 'advise', 'topics', 'suggest_next',
 ]
 
 const TABLES = ['manifest.json', 'design.tsv', 'qc.tsv', 'results/*.tsv', 'figures/', 'evidence.jsonl', 'methods.md']
@@ -177,7 +177,7 @@ export async function runTool(runtime, args = {}) {
     ask: opAsk, plan: opPlan, submit: opSubmit, runs: opRuns, run_status: opRunStatus,
     cancel: opCancel, export: opExport, evidence: opEvidence, methods: opMethods,
     audit: opAudit, suggest: opSuggest, harmonize: opHarmonize, joint: opJoint,
-    delete: opDelete, settings: opSettings,
+    delete: opDelete, settings: opSettings, advise: opAdvise, topics: opTopics, suggest_next: opSuggestNext,
   }
   try {
     const result = await handlers[action](runtime, store, args)
@@ -410,10 +410,63 @@ async function opAsk(runtime, store, args) {
   if (args.fdr !== undefined) intent.fdr_family = typeof args.fdr === 'object' ? args.fdr : { method: 'BH', alpha: Number(args.fdr) }
   if (args.scale) intent.scale = String(args.scale)
 
-  const resolved = I.resolveIntentDataset({ ...intent, dataset_hint: args.dataset || args.dataset_id || intent.dataset_hint }, datasets)
+  const warnings = []
+  let resolved = I.resolveIntentDataset({ ...intent, dataset_hint: args.dataset || args.dataset_id || intent.dataset_hint }, datasets)
+  let autoDataset = false
+  const accessionText = (String(intent.raw_text || '').match(/\b(GSE\d{3,7}|TCGA-[A-Z0-9]{2,6}|MTBLS\d+)\b/i) || [])[0] || null
+  let onlineCandidates = null
+  if (!resolved.dataset && accessionText && !args.no_auto_dataset) {
+    // 用户点名了编号但没登记：绝不拿本地不相关数据集顶替；去公共库查这个编号
+    try {
+      const found = await opAdvise(runtime, store, { need: intent.raw_text, term: accessionText, sources: ['geo', 'gdc', 'metabolights'], limit: 5 })
+      onlineCandidates = found.recommendations || null
+    } catch (error) { onlineCandidates = null }
+    resolved = { dataset: null, matched_by: 'accession_unregistered', needs_confirm: true, accession: accessionText }
+    warnings.push(`你点名的 ${accessionText} 还没有登记：已去公共库检索（见 online_candidates）。不会用本地数据集顶替；请先下载并登记。`)
+  }
+  if (!resolved.dataset && datasets.length && !args.no_auto_dataset && !accessionText) {
+    // 许愿式：话里没点名数据集时，别回一句"缺 dataset"，直接挑一个最可用的已登记数据集
+    const rank = (dataset) => {
+      const samples = (dataset.design && Array.isArray(dataset.design.samples)) ? dataset.design.samples : []
+      const groups = new Set(samples.map((sample) => String(sample.group || '').trim()).filter(Boolean))
+      let score = 0
+      if (groups.size >= 2) score += 30
+      if (samples.length >= 2) score += 10
+      if (dataset.scale && dataset.scale.verified) score += 8
+      score += Math.min(10, Math.floor(samples.length / 4))
+      return score
+    }
+    const ranked = datasets.slice().sort((left, right) => rank(right) - rank(left))
+    const picked = ranked[0]
+    if (picked) {
+      autoDataset = true
+      resolved = {
+        dataset: picked, matched_by: 'auto', auto: true, needs_confirm: true,
+        alternatives: ranked.slice(0, 5).map((dataset) => ({ dataset_id: dataset.dataset_id, name: dataset.name, n_samples: (dataset.design && dataset.design.samples || []).length, data_kind: dataset.data_kind })),
+      }
+    }
+  }
+  const datasetOptions = datasets.slice(0, 8).map((dataset) => {
+    const groups = [...new Set(((dataset.design && dataset.design.samples) || []).map((sample) => String(sample.group || '').trim()).filter(Boolean))]
+    const summaryZh = summarizeDatasetZh({
+      dataset_id: dataset.dataset_id, source: 'registered', species: dataset.species,
+      n_samples: (dataset.design && Array.isArray(dataset.design.samples)) ? dataset.design.samples.length : 0,
+      scale: dataset.scale ? dataset.scale.type : null, groups,
+      files: dataset.files, clinical: dataset.clinical,
+    }, dataset.data_kind)
+    return {
+      dataset_id: dataset.dataset_id,
+      name: dataset.name,
+      n_samples: (dataset.design && Array.isArray(dataset.design.samples)) ? dataset.design.samples.length : 0,
+      groups,
+      data_kind: dataset.data_kind,
+      scale: dataset.scale ? dataset.scale.type : null,
+      verified: Boolean(dataset.scale && dataset.scale.verified),
+      summary_zh: summaryZh,
+    }
+  })
   let llmUsed = false
   let llmSuggestion = null
-  const warnings = []
   if (!intent.template && typeof runtime.llmResolver === 'function') {
     const assisted = await I.llmAssist({ resolver: runtime.llmResolver, text: intent.raw_text, dataset: resolved.dataset, datasets })
     if (assisted.used) {
@@ -428,8 +481,47 @@ async function opAsk(runtime, store, args) {
       warnings.push(`LLM 兜底未使用：${assisted.reason || '未配置'}`)
     }
   }
+  // 模板/对照在 impl 侧再兜一次底：话里没点名时自动选数据集、自动判方向、模板与模态对齐。
+  if (resolved.dataset) {
+    const kind = String(resolved.dataset.data_kind || 'unknown')
+    const templateDef = intent.template ? P.TEMPLATES[intent.template] : null
+    const compatible = templateDef && (templateDef.requires_kind || []).some((need) => need === kind || need === 'any')
+    if (!intent.template || !compatible) {
+      const fallback = defaultTemplateFor(kind)
+      if (intent.template && intent.template !== fallback) warnings.push(`模板 ${intent.template} 与数据模态 ${kind} 不匹配，已改用 ${fallback}`)
+      intent.template = fallback
+    }
+    if (!intent.contrast) {
+      const samples = (resolved.dataset.design && Array.isArray(resolved.dataset.design.samples)) ? resolved.dataset.design.samples : []
+      const groups = [...new Set(samples.map((sample) => String(sample.group || '').trim()).filter(Boolean))]
+      if (groups.length === 2) {
+        const CONTROL = /(normal|control|healthy|adjacent|para|non.?tumou?r|untreated|sensitive|benign|baseline)/i
+        const CASE = /(tumou?r|case|disease|cancer|carcinoma|metasta|malignant|treated|resistant|progress)/i
+        const sorted = groups.slice().sort((left, right) => {
+          const score = (name) => (CONTROL.test(name) ? -1 : CASE.test(name) ? 1 : 0)
+          return score(right) - score(left) || String(left).localeCompare(String(right))
+        })
+        intent.contrast = { case: sorted[0], control: sorted[1], direction: 'case_minus_control', needs_confirm: true, auto: true }
+        warnings.push(`数据里只有两组（${sorted[0]} / ${sorted[1]}），已自动判定方向，可在计划卡里改`)
+      }
+    }
+  }
   const draft = I.buildDraft({ intent, dataset: resolved.dataset, datasets, llmUsed, llmSuggestion, warnings })
-  draft.dataset_match = { dataset_id: resolved.dataset ? resolved.dataset.dataset_id : null, matched_by: resolved.matched_by, needs_confirm: resolved.needs_confirm }
+  draft.dataset_match = {
+    dataset_id: resolved.dataset ? resolved.dataset.dataset_id : null,
+    matched_by: resolved.matched_by,
+    needs_confirm: resolved.needs_confirm,
+    auto_selected: autoDataset,
+    alternatives: resolved.alternatives || [],
+  }
+  draft.dataset_options = datasetOptions
+  if (onlineCandidates) draft.online_candidates = onlineCandidates
+  if (accessionText && !resolved.dataset) {
+    draft.accession_unregistered = accessionText
+    draft.missing_fields = [...new Set([...(draft.missing_fields || []), 'dataset'])]
+    draft.next = `先下载并登记 ${accessionText}（download → register），再提交计划`
+  }
+  if (autoDataset) warnings.push(`没有从话里认出数据集，已自动选「${resolved.dataset.name || resolved.dataset.dataset_id}」（可在计划卡里换）`)
   if (resolved.needs_confirm && resolved.dataset) {
     draft.questions = [{ field: 'dataset', question: `用这个数据集吗：${resolved.dataset.name || resolved.dataset.dataset_id}？`, candidates: draft.candidates.dataset || [] }, ...(draft.questions || [])]
   }
@@ -953,6 +1045,159 @@ async function createInternalRun(runtime, store, { plan, dataset, label }) {
   return { run: store.getRun(run.run_id), reused: false, result, label }
 }
 
+/**
+ * harmonize 之后把合并矩阵登记成一个「合并数据集」，后续 template 可以直接拿它跑分析。
+ * 这样「多个数据集 → 校正 → 继续跑」是一条链，而不是校正完就没下文。
+ */
+async function registerMergedDataset(store, runId, datasets, { method, targetScale }) {
+  const runDir = store.runDir(runId)
+  const gz = path.join(runDir, 'results', 'harmonized_matrix.tsv.gz')
+  if (!fs.existsSync(gz)) return null
+  let text
+  try { text = zlib.gunzipSync(fs.readFileSync(gz)).toString('utf8') } catch { return null }
+  const firstLine = String(text).split(/\r?\n/, 1)[0] || ''
+  const delimiter = (firstLine.match(/\t/g) || []).length >= (firstLine.match(/,/g) || []).length ? '\t' : ','
+  const sampleNames = firstLine.split(delimiter).slice(1).map((name) => name.trim()).filter(Boolean)
+  const byDataset = new Map(datasets.map((dataset) => [dataset.dataset_id, dataset]))
+  const samples = []
+  const unresolved = []
+  for (const rawName of [...new Set(sampleNames)]) {
+    // harmonize 的合并矩阵列名形如 "<dataset_id>:<原样本名>"（也兼容 "__"）
+    const match = rawName.match(/^(.*?)(?::|__)(.+)$/)
+    const datasetId = match ? match[1] : null
+    const originalId = match ? match[2] : rawName
+    const dataset = datasetId ? byDataset.get(datasetId) : null
+    const pool = dataset && Array.isArray(dataset.design && dataset.design.samples) ? dataset.design.samples : []
+    const hit = pool.find((sample) => String(sample.sample_id) === originalId || String(sample.display_name || '') === originalId)
+    if (!hit) {
+      unresolved.push(rawName)
+      samples.push({ sample_id: rawName, display_name: rawName, group: '', donor_id: '', batch: datasetId || '', pair_id: '' })
+      continue
+    }
+    samples.push({
+      sample_id: rawName,
+      display_name: String(hit.display_name || originalId),
+      group: String(hit.group || ''),
+      donor_id: String(hit.donor_id || hit.donor || ''),
+      batch: String(datasetId || ''),
+      pair_id: String(hit.pair_id || ''),
+    })
+  }
+  // 守恒检查：合并样本数必须等于各输入队列样本数之和；对不上就拒绝登记，避免串组
+  const expected = datasets.reduce((sum, dataset) => {
+    const pool = dataset.design && Array.isArray(dataset.design.samples) ? dataset.design.samples : []
+    return sum + pool.length
+  }, 0)
+  if (expected && samples.length !== expected) {
+    throw new Error(`合并样本数不守恒：输入合计 ${expected}，合并矩阵 ${samples.length}；拒绝登记（可能发生样本串组或对齐丢样）`)
+  }
+  if (unresolved.length) {
+    throw new Error(`有 ${unresolved.length} 个合并样本无法按「dataset_id:原样本名」回查来源（例如 ${unresolved.slice(0, 3).join('、')}）；拒绝登记`)
+  }
+  const groups = [...new Set(samples.map((sample) => sample.group).filter(Boolean))]
+  const scaleMap = { counts: 'counts', tpm: 'tpm', log_expression: 'log_expression', zscore: 'normalized_expression', none: 'normalized_expression' }
+  const dsid = `ds_harm_${sha256(JSON.stringify({ run_id: runId, method, targetScale })).slice(0, 12)}`
+  const existing = store.getDataset(dsid)
+  if (existing) return { dataset: existing, reused: true }
+  const dir = store.datasetDir(dsid)
+  ensureDir(dir)
+  const matrixPath = path.join(dir, 'harmonized_matrix.tsv')
+  atomicWriteFile(matrixPath, text)
+  const header = ['sample', 'group', 'donor', 'batch', 'source_dataset', 'source_sample']
+  const lines = [header.join('\t')].concat(samples.map((sample) => {
+    const parts = sample.sample_id.split(/:(.+)|__(.+)/)
+    return [sample.sample_id, sample.group, sample.donor_id, sample.batch, sample.batch, parts[1] || parts[2] || sample.sample_id].join('\t')
+  }))
+  const sheetPath = path.join(dir, 'samples.tsv')
+  atomicWriteFile(sheetPath, lines.join('\n') + '\n')
+  const matrixSha = await sha256File(matrixPath)
+  const manifest = {
+    schema_version: 1,
+    dataset_id: dsid,
+    name: `merged:${datasets.map((item) => item.name || item.dataset_id).join(' + ')}`,
+    created_at: nowIso(),
+    source: { kind: 'harmonize', run_id: runId, method },
+    assay: 'harmonized',
+    data_kind: (datasets[0] && datasets[0].data_kind) || 'bulk',
+    species: datasets[0] ? datasets[0].species : null,
+    platform: null,
+    reference: null,
+    data_format: 'auto',
+    transpose: true,
+    scale: { type: scaleMap[String(targetScale || 'none')] || 'normalized_expression', verified: true, evidence: `harmonize 输出（method=${method}, target_scale=${targetScale || 'none'}）`, note: null },
+    files: [{ path: matrixPath, name: 'harmonized_matrix.tsv', bytes: fileSize(matrixPath), sha256: matrixSha, artifact_id: matrixSha, role: 'matrix' }],
+    sample_sheet: { path: sheetPath, sha256: await sha256File(sheetPath), columns: { sample: 'sample', group: 'group', donor: 'donor', batch: 'source_dataset' } },
+    design: {
+      group_column: 'group', donor_column: 'donor', batch_column: 'source_dataset', pair_column: null, paired: false,
+      samples, columns: { sample: 'sample', group: 'group', donor: 'donor', batch: 'source_dataset', pair: null, material: null },
+      unresolved: [],
+      source_datasets: datasets.map((item) => item.dataset_id),
+      source_mapping: samples.map((sample) => ({ merged_sample_id: sample.sample_id, source_dataset: sample.batch, source_sample: sample.display_name })),
+    },
+    conflicts: [],
+    unverified: [],
+    registered_at: nowIso(),
+  }
+  store.putDataset(manifest)
+  store.logEvent('harmonize', 'merged_dataset', { dataset_id: dsid, run_id: runId, samples: samples.length })
+  return {
+    dataset: manifest, reused: false,
+    summary: `合并数据集 ${dsid}：${samples.length} 样本 / ${groups.length ? groups.join('、') : '无分组'}（method=${method}）`,
+  }
+}
+
+/**
+ * 顺着这次结果继续许愿：读 run 的 manifest/results，给 2-4 个「下一步能做什么」，
+ * 零显著时明确说「分析完成、当前阈值下无显著项」，不粉饰。
+ */
+async function opSuggestNext(runtime, store, args) {
+  const runId = String(args.run_id || args.run || '')
+  if (!runId) throw storeError('bad_request', 'suggest_next 需要 run_id')
+  const run = store.getRun(runId)
+  if (!run) throw storeError('not_found', `run 不存在：${runId}`)
+  if (!['succeeded', 'partial'].includes(run.status)) {
+    return { ok: false, action: 'suggest_next', run_id: runId, status: run.status, directions: [], summary: `run 状态 ${run.status}：先修好再谈下一步` }
+  }
+  const runDir = store.runDir(runId)
+  const manifest = readJsonIfExists(path.join(runDir, 'manifest.json')) || {}
+  const zero = Boolean(manifest.zero_significant)
+  const index = readJsonIfExists(path.join(runDir, 'results', 'tables.index.json')) || {}
+  const tables = Array.isArray(index.tables) ? index.tables : []
+  const measured = tables.find((table) => table.evidence_kind === 'measured')
+  let topFeatures = []
+  if (measured && measured.file) {
+    try {
+      const parsed = parseDelimited(fs.readFileSync(path.join(runDir, measured.file), 'utf8'))
+      const featureKey = parsed.header.find((key) => /gene|feature|symbol|metabolite|id/i.test(key)) || parsed.header[0]
+      const effectKey = parsed.header.find((key) => /^log2?fc$|^logfc$|effect|estimate|coef/i.test(key))
+      const rows = parsed.objects.slice()
+      if (effectKey) rows.sort((left, right) => Math.abs(Number(right[effectKey]) || 0) - Math.abs(Number(left[effectKey]) || 0))
+      topFeatures = rows.slice(0, 8).map((row) => String(row[featureKey] || '')).filter(Boolean)
+    } catch { topFeatures = [] }
+  }
+  const directions = []
+  if (zero) {
+    directions.push(
+      { id: 'qc-batch', label: '检查样本 QC 与批次分布', need: `对 run ${runId} 的样本做 QC 与批次诊断，看看是否批次/离群样本压掉了信号` },
+      { id: 'trend', label: '看按效应量排序的 Top 趋势基因（探索性）', need: `列出 run ${runId} 按效应量排序的 Top 基因，标为探索性趋势、不称为显著` },
+      { id: 'bigger', label: '换更大样本量的公共队列验证', need: '找同疾病、更大样本量、含相同分组的公共队列做验证（先给候选）' },
+    )
+  } else {
+    if (topFeatures.length) directions.push({ id: 'top-genes', label: `拿 Top ${Math.min(8, topFeatures.length)} 个基因做通路富集/互作`, need: `用 run ${runId} 的 Top 基因（${topFeatures.slice(0, 5).join('、')}）做通路富集或互作分析，复用这次结果` })
+    directions.push({ id: 'validate', label: '拿这批结果去独立队列验证', need: `把 run ${runId} 的差异结果拿到独立公共队列验证，先给候选数据集` })
+    directions.push({ id: 'tcga', label: '看这些基因在 TCGA 的生存关联', need: `把 run ${runId} 的关键基因放到 TCGA 带随访队列里做生存关联（需临床终点）` })
+    directions.push({ id: 'scrna', label: '在单细胞里看这些基因的表达', need: `把这些关键基因放到单细胞数据里看细胞类型与表达，先给候选单细胞队列` })
+  }
+  return {
+    ok: true, action: 'suggest_next', run_id: runId, status: run.status, zero_significant: zero,
+    summary: zero
+      ? '分析已完成：当前阈值下 0 项显著；完整结果仍可导出。可以从 QC/批次、趋势基因、更大样本量队列继续。'
+      : `已得到候选结果（${topFeatures.length ? 'Top 基因如 ' + topFeatures.slice(0, 3).join('、') : '结果表已就绪'}），可以接着做验证或锚定到单细胞/TCGA。`,
+    directions,
+    top_features: topFeatures,
+  }
+}
+
 async function opHarmonize(runtime, store, args) {
   const datasetIds = Array.isArray(args.dataset_ids) ? args.dataset_ids : args.datasets || []
   if (!Array.isArray(datasetIds) || datasetIds.length < 2) {
@@ -967,6 +1212,29 @@ async function opHarmonize(runtime, store, args) {
     if (!dataset) throw storeError('not_found', `数据集不存在：${id}`)
     return dataset
   })
+  // 合并前设计检查：若每个队列都只有一组、且不同队列分属不同组，则分组与队列完全混杂
+  const groupProfile = datasets.map((dataset) => {
+    const samples = (dataset.design && Array.isArray(dataset.design.samples)) ? dataset.design.samples : []
+    const groups = [...new Set(samples.map((sample) => String(sample.group || '').trim()).filter(Boolean))]
+    return { dataset_id: dataset.dataset_id, groups, n_samples: samples.length }
+  })
+  const distinctGroups = [...new Set(groupProfile.flatMap((item) => item.groups))]
+  const cohortConfounded = groupProfile.length >= 2
+    && groupProfile.every((item) => item.groups.length <= 1)
+    && distinctGroups.length >= 2
+  if (cohortConfounded) {
+    return {
+      ok: false, action: 'harmonize', status: 'blocked',
+      blocking: [{
+        id: 'dataset_confounded',
+        message_zh: '这些队列各自只含一个分组：合并后分不出疾病差异还是队列/批次差异，不能用来做跨队列比较。',
+        fixes: ['改成在同一队列内比较', '换一个同时包含这两组的队列', '只做描述性联合出图（joint mode=plot）'],
+        profile: groupProfile,
+      }],
+      summary: `拦截合并：${groupProfile.map((item) => `${item.dataset_id}=${item.groups.join('/') || '无分组'}`).join('；')}，分组与队列完全混杂`,
+      next: '改用同一队列内比较，或换含双组的队列；不要用方法名把 cross_dataset_inference_allowed 强行置真',
+    }
+  }
   const prepared = datasets.map((dataset, index) => {
     const primary = P.selectPrimaryFile(dataset)
     return {
@@ -974,7 +1242,9 @@ async function opHarmonize(runtime, store, args) {
       name: dataset.name,
       path: primary ? primary.path : null,
       scale: dataset.scale ? dataset.scale.type : 'unknown',
-      transpose: Boolean(dataset.transpose),
+      // dataset.transpose=true 表示「文件是 特征×样本」（各插件按此转置）；
+      // harmonize 内部原生就是 特征×样本，所以这里要用**相反**的布尔值。
+      transpose: !dataset.transpose,
       probe_map: args.probe_map_file || null,
       species: dataset.species,
       assay: dataset.assay,
@@ -1011,6 +1281,11 @@ async function opHarmonize(runtime, store, args) {
     const index = readJsonIfExists(path.join(store.runDir(finalRun.run_id), 'results', 'tables.index.json'))
     for (const table of (index && index.tables) || []) tableRows.push({ table_id: table.table_id, rows: table.rows, evidence_kind: table.evidence_kind })
   } catch { /* ignore */ }
+  let merged = null
+  if (finalRun.status === 'succeeded' && args.register_dataset !== false) {
+    try { merged = await registerMergedDataset(store, finalRun.run_id, datasets, { method, targetScale: args.target_scale || 'none' }) }
+    catch (error) { merged = { error: String(error && error.message ? error.message : error) } }
+  }
   return {
     ok: finalRun.status === 'succeeded',
     action: 'harmonize',
@@ -1023,8 +1298,13 @@ async function opHarmonize(runtime, store, args) {
     reused: execution.reused,
     tables: tableRows,
     warnings: finalRun.warnings || [],
-    summary: `harmonize（method=${method}）→ ${finalRun.status}；run_id=${finalRun.run_id}`,
-    next: method === 'none' ? '未校正：跨数据集合并推断被禁止，只能描述性联合出图（action=joint mode=plot）' : '可继续 action=joint mode=meta / plot',
+    merged_dataset_id: merged && merged.dataset ? merged.dataset.dataset_id : null,
+    merged_dataset: merged && merged.dataset ? { dataset_id: merged.dataset.dataset_id, name: merged.dataset.name, n_samples: (merged.dataset.design.samples || []).length, groups: [...new Set((merged.dataset.design.samples || []).map((sample) => sample.group).filter(Boolean))] } : null,
+    merged_error: merged && merged.error ? merged.error : null,
+    summary: `harmonize（method=${method}）→ ${finalRun.status}；run_id=${finalRun.run_id}` + (merged && merged.dataset ? `；已登记合并数据集 ${merged.dataset.dataset_id}` : ''),
+    next: merged && merged.dataset
+      ? `用 action=plan dataset=${merged.dataset.dataset_id} template=bulk-two-group 继续跑（或 action=joint mode=meta/plot）`
+      : (method === 'none' ? '未校正：跨数据集合并推断被禁止，只能描述性联合出图（action=joint mode=plot）' : '可继续 action=joint mode=meta / plot'),
     run: finalRun,
   }
 }
@@ -1231,6 +1511,264 @@ async function opSearch(runtime, store, args) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 中文摘要（数据集/文献）——给"弹窗里看得懂"的候选信息
+// ---------------------------------------------------------------------------
+var SPECIES_ZH = { human: '人', 'homo sapiens': '人', mouse: '小鼠', 'mus musculus': '小鼠', rat: '大鼠' }
+var SOURCE_ZH = { geo: 'GEO', gdc: 'TCGA/GDC', metabolights: 'MetaboLights', cellxgene: 'CELLxGENE', registered: '已登记' }
+var KIND_ZH = { bulk: 'bulk 转录组', scrna: '单细胞 RNA', spatial: '空间转录组', metabolomics: '代谢组', matrix: '矩阵' }
+
+function zhSpecies(value) {
+  const key = String(value || '').toLowerCase()
+  return SPECIES_ZH[key] || (value ? String(value) : '未知物种')
+}
+
+function summarizeDatasetZh(item, kind) {
+  const source = String(item.source || 'registered')
+  const sourceZh = SOURCE_ZH[source] || source
+  const id = String(item.dataset_id || item.id || '')
+  const species = zhSpecies(item.species)
+  const n = Number(item.n_samples) || 0
+  const scale = item.scale && item.scale.type ? item.scale.type : (typeof item.scale === 'string' ? item.scale : '')
+  const kindZh = KIND_ZH[kind || item.kind] || KIND_ZH[item.data_kind] || '未知模态'
+  const groups = asArrayLite(item.groups)
+  const hasMatrix = Number(item.attachments || 0) > 0 || Boolean(item.files && item.files.length)
+  const hasClinical = Boolean(item.clinical)
+  const suitable = []
+  if (groups.length >= 2) suitable.push('做组间比较（已有分组）')
+  else if (n >= 8) suitable.push('可先看样本能否按临床分组')
+  if (kindZh.indexOf('bulk') >= 0) suitable.push('差异表达 + 通路富集')
+  if (kindZh.indexOf('单细胞') >= 0) suitable.push('细胞组成比较 + pseudobulk')
+  if (hasClinical) suitable.push('生存/临床关联分析')
+  if (n < 10) suitable.push('小队列，适合作为补充队列或合并分析')
+  const risks = []
+  if (n && n < 6) risks.push(`样本量仅 ${n}，两组比较很可能重复不足`)
+  if (!hasMatrix) risks.push('没有看到可直接下载的矩阵/附件')
+  if (!scale) risks.push('尺度未知，推断前需要确认 counts/log')
+  if (!groups.length) risks.push('分组信息未知，登记时要给样本表')
+  return {
+    source: sourceZh,
+    id,
+    headline: `${sourceZh} ${id}｜${species}｜${n ? n + ' 样本' : '样本量未知'}｜${kindZh}`,
+    text: [
+      `${sourceZh} 的数据集 ${id}，物种 ${species}${n ? `，共 ${n} 个样本` : ''}，类型判断为${kindZh}${scale ? `，数据尺度 ${scale}` : ''}。`,
+      groups.length ? `已识别分组：${groups.join('、')}。` : '尚未识别分组。',
+      hasMatrix ? '有可下载/已登记的表达矩阵。' : '未看到矩阵附件。',
+      hasClinical ? '带临床或随访信息，可用于生存/辅助分析。' : '未见临床/随访字段。',
+      suitable.length ? `适合：${suitable.join('；')}。` : '',
+      risks.length ? `注意：${risks.join('；')}。` : '',
+    ].filter(Boolean).join(''),
+    suitable,
+    risks,
+  }
+}
+
+/** 疾病 → 候选临床现象（模板）+ 近两年文献热点。 */
+async function opTopics(runtime, store, args) {
+  const disease = String(args.need || args.disease || args.query || '').trim()
+  if (!disease) throw storeError('bad_request', 'topics 需要 disease/need（如 胃癌肝转移）')
+  const templates = [
+    { id: 'metastasis-immune', text: `${disease} 的转移灶与原发灶在免疫细胞组成上是否不同？` },
+    { id: 'response', text: `${disease} 对一线治疗有响应和无响应的人，肿瘤微环境是否有差异？` },
+    { id: 'prognosis', text: `${disease} 中某类免疫细胞比例下降是否与更差的预后相关？` },
+    { id: 'resistance', text: `${disease} 复发/耐药人群是否存在可复现的表达或通路特征？` },
+    { id: 'subtype', text: `${disease} 是否存在与治疗靶点相关的分子亚型？` },
+    { id: 'biomarker', text: `${disease} 中某个基因/通路的表达能否作为疗效预测标志物？` },
+  ]
+  // 中文疾病名 → 英文检索词（PubMed 对中文支持差）；未知时保留原词并去掉标点
+  const DISEASE_EN = [
+    ['胃癌肝转移', 'gastric cancer liver metastasis'], ['胃癌', 'gastric cancer'], ['肝转移', 'liver metastasis'],
+    ['结直肠癌', 'colorectal cancer'], ['肺腺癌', 'lung adenocarcinoma'], ['肺癌', 'lung cancer'],
+    ['肝细胞癌', 'hepatocellular carcinoma'], ['胰腺癌', 'pancreatic cancer'], ['乳腺癌', 'breast cancer'],
+    ['食管鳞癌', 'esophageal squamous cell carcinoma'], ['单细胞', 'single-cell'], ['免疫', 'immune'],
+    ['耐药', 'drug resistance'], ['预后', 'prognosis'], ['转移', 'metastasis'],
+  ]
+  let english = String(disease || '')
+  for (const [zh, en] of DISEASE_EN) english = english.split(zh).join(' ' + en + ' ')
+  english = english.replace(/[，。；、]/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!english || english === disease) english = disease
+  let hot = []
+  try {
+    const client = getPubMedClient(runtime, store)
+    const queried = await client.search({ term: `${english} AND (review[pt] OR systematic review[pt])`, limit: Number(args.limit) || 8 })
+    hot = asArrayLite(queried && queried.items).slice(0, 6).map((item) => ({
+      pmid: item.id || item.pmid || null,
+      title: item.title || null,
+      journal: item.journal || null,
+      year: item.year || null,
+      abstract: item.abstract ? String(item.abstract).slice(0, 240) : null,
+    }))
+  } catch (error) {
+    hot = []
+  }
+  const phenomena = templates.concat(hot.slice(0, 3).map((paper, index) => ({
+    id: 'hot-' + index,
+    text: `文献热点（PMID ${paper.pmid || '?'}）：${paper.title || ''} —— 这个结论在 ${disease} 队列里能否复现？`,
+  })))
+  return {
+    ok: true,
+    action: 'topics',
+    disease,
+    phenomena,
+    hot_topics: hot,
+    summary: hot.length
+      ? `${disease}：${phenomena.length} 个候选临床问题（含 ${hot.length} 篇近两年综述/系统综述热点）`
+      : `${disease}：${phenomena.length} 个候选临床问题（模板生成；文献检索未返回结果）`,
+    next: '挑一个现象 → 查文献与队列核实 → 写入思路链或生成核实许愿',
+  }
+}
+
+/** 把一句人话拆成检索词（规则式，不依赖外部模型）。 */
+function keywordsOf(text) {
+  const stop = /^(帮我|请|把|拿|用|按|检索|搜索|找|下载|数据|数据集|分析|出图|作图|画图|比较|对比|差异|看看|一下|的|和|与|跟|比|vs|the|a|an|of|and|for|with|data|dataset|analysis)$/i
+  return [...new Set(String(text || '')
+    .split(/[\s,，。；;、/]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !stop.test(token)))]
+}
+
+/** 从标题/摘要里推测数据模态，给模板推荐用。 */
+function guessKindOfItem(item) {
+  const text = `${item.title || ''} ${item.abstract || ''}`.toLowerCase()
+  if (/single.?cell|scrna|sc-rna|10x|cell atlas/.test(text)) return 'scrna'
+  if (/spatial|visium|stereo.?seq|slide.?seq|merfish/.test(text)) return 'spatial'
+  if (/metabolom|metabolite|lc-?ms|gc-?ms|nmr/.test(text)) return 'metabolomics'
+  return 'bulk'
+}
+
+/**
+ * action=advise：AI 挑数据 + 辅助分析。
+ * 不调用外部大模型：用可复现的确定性打分（命中度/样本量/矩阵/临床/物种/模态），
+ * 每条推荐都给出「为什么」和「风险」，并附「下一步怎么做」的具体动作。
+ */
+async function opAdvise(runtime, store, args) {
+  const rawNeed = String(args.need || args.query || args.term || args.text || '').trim()
+  if (!rawNeed) throw storeError('bad_request', 'advise 需要 need/term（一句话描述你要解决的问题）')
+  const keywords = keywordsOf(rawNeed)
+  const accession = (rawNeed.match(/\b(GSE\d{3,7}|TCGA-[A-Z0-9]{2,6}|MTBLS\d+)\b/i) || [])[0] || null
+  const term = args.term || (accession || (keywords.length ? keywords.join(' ') : rawNeed))
+  const sources = parseSources(args.sources, { defaultSources: ['geo', 'pubmed', 'gdc', 'metabolights'] })
+  const wantHuman = String(args.species || '').toLowerCase() === 'human'
+  const result = await S.performSearch({
+    store,
+    sourcesClient: getSourcesClient(runtime, store),
+    pubmedClient: getPubMedClient(runtime, store),
+    term,
+    sources,
+    limit: Number(args.limit) || 12,
+    page: 0,
+    species: args.species || 'all',
+    includeAbstracts: false,
+    hasClinical: false,
+    europepmc: false,
+  })
+  const itemsBySource = {}
+  for (const [source, sourceResult] of Object.entries(result.results || {})) itemsBySource[source] = sourceResult.items || []
+  const datasetItems = []
+  for (const source of ['geo', 'gdc', 'metabolights', 'cellxgene']) {
+    for (const item of asArrayLite(itemsBySource[source])) datasetItems.push(Object.assign({ source }, item))
+  }
+  const titleTokens = keywords.map((token) => token.toLowerCase())
+  const recommendations = datasetItems.map((item) => {
+    const reasons = []
+    const risks = []
+    let score = 0
+    const nSamples = Number(item.n_samples) || 0
+    const kind = guessKindOfItem(item)
+    if (accession && String(item.id || '').toUpperCase() === accession.toUpperCase()) { score += 40; reasons.push('就是你点名的数据') }
+    const title = String(item.title || '').toLowerCase()
+    const hits = titleTokens.filter((token) => title.includes(token)).length
+    if (hits) { score += Math.min(15, hits * 5); reasons.push(`标题命中 ${hits} 个关键词`) }
+    if (wantHuman && /human|homo sapiens/i.test(String(item.species || ''))) { score += 10; reasons.push('人源') }
+    else if (wantHuman && item.species && !/human|homo sapiens/i.test(String(item.species || ''))) risks.push(`物种是 ${item.species}，不是人`)
+    if (nSamples >= 20) { score += 18; reasons.push(`样本量 ${nSamples}`) }
+    else if (nSamples >= 8) { score += 10; reasons.push(`样本量 ${nSamples}`) }
+    else if (nSamples > 0) { score -= 8; risks.push(`样本量仅 ${nSamples}，两组比较很可能重复不足（闸门会拦 n<2/组）`) }
+    if (asArrayLite(item.attachments).length) { score += 6; reasons.push('有可下载矩阵/附件') } else risks.push('没看到可直接下载的矩阵')
+    if (item.clinical || (item.metadata && item.metadata.clinical)) { score += 12; reasons.push('带临床信息（可做生存/辅助分析）') } else if (/survival|prognos|生存|预后/i.test(rawNeed)) risks.push('没看到临床/随访字段，生存分析可能缺终点')
+    const scale = item.scale && item.scale.type ? String(item.scale.type) : ''
+    if (scale) { score += 4; reasons.push(`尺度 ${scale}`) } else risks.push('尺度未知，推断前需要确认 counts/log')
+    if (item.platform) { score += 2 }
+    if (kind !== 'bulk') reasons.push(`模态像 ${kind}`)
+    const summaryZh = summarizeDatasetZh({ dataset_id: item.id, source: item.source, species: item.species, n_samples: nSamples, scale: scale || (item.scale && item.scale.type) || null, attachments: asArrayLite(item.attachments).length, clinical: Boolean(item.clinical), groups: [] }, kind)
+    return {
+      dataset_id: item.id,
+      source: item.source,
+      summary_zh: summaryZh,
+      title: item.title || null,
+      species: item.species || null,
+      n_samples: nSamples || null,
+      platform: item.platform || null,
+      scale: scale || null,
+      kind,
+      score: Math.max(0, Math.round(score)),
+      reasons,
+      risks,
+      attachments: asArrayLite(item.attachments).length,
+      clinical: Boolean(item.clinical),
+    }
+  }).sort((a, b) => b.score - a.score).slice(0, 8)
+
+  const literature = asArrayLite(itemsBySource.pubmed).slice(0, 6).map((item) => ({
+    pmid: item.id || item.pmid || null,
+    title: item.title || null,
+    journal: item.journal || null,
+    year: item.year || null,
+    authors: asArrayLite(item.authors).slice(0, 3),
+  }))
+
+  const top = recommendations[0] || null
+  const templateByKind = { bulk: 'bulk-two-group', scrna: 'scrna-composition', spatial: 'spatial-domain', metabolomics: 'metabolomics-de' }
+  const template = templateByKind[top ? top.kind : 'bulk'] || 'bulk-two-group'
+  const smallCohorts = recommendations.filter((item) => item.n_samples && item.n_samples < 10).slice(0, 4)
+  const planHint = {
+    template,
+    reason: top ? `首推 ${top.dataset_id}（${top.kind}，样本 ${top.n_samples || '?'}）→ 用 ${template}` : `没找到合适数据集，建议先换更通用的关键词`,
+    contrast_suggestion: 'tumor vs normal（如果数据只有两组，ask 会自动判定方向）',
+    gates_to_watch: smallCohorts.length ? ['replication：每组独立 n≥2', 'design_confounded：分组是否与批次共线', 'counts_verified：尺度'] : ['counts_verified', 'contrast'],
+    multi_dataset: smallCohorts.length >= 2
+      ? {
+        suggestion: '这些队列单看样本量偏小，建议合并后再比较：先 harmonize 校正批次，再用登记出来的合并数据集继续跑',
+        dataset_ids: smallCohorts.map((item) => item.dataset_id),
+        action: `harmonize dataset_ids=[${smallCohorts.map((item) => `"${item.dataset_id}"`).join(', ')}] method=quantile → 得到 merged_dataset_id → plan dataset=<merged>`,
+      }
+      : null,
+  }
+  const nextSteps = []
+  if (top) {
+    nextSteps.push(`① 取数据：download source=${top.source} id=${top.dataset_id}（或用页面「下载并登记」一键）`)
+    nextSteps.push(`② 登记：register artifact_ids=[下载产物] sample_sheet=<样本表>（能自动探测矩阵方向与尺度）`)
+    nextSteps.push(`③ 出计划：plan dataset=<ds_xxx> template=${template} case=tumor control=normal（draft 只问缺的字段）`)
+    if (planHint.multi_dataset) nextSteps.push(`④ 样本不够时走合并：${planHint.multi_dataset.action}`)
+  } else {
+    nextSteps.push('换更通用的关键词重试（疾病名 / 组织 / 技术），或放宽 sources 到 gdc/metabolights')
+  }
+  return {
+    ok: true,
+    action: 'advise',
+    query: rawNeed,
+    search_term: term,
+    keywords,
+    accession,
+    recommendations,
+    literature,
+    plan_hint: planHint,
+    next_steps: nextSteps,
+    provenance: result.provenance,
+    warnings: result.warnings,
+    summary: top
+      ? `推荐 ${top.dataset_id}（${top.kind}，样本 ${top.n_samples || '?'}，得分 ${top.score}）→ 模板 ${template}` + (planHint.multi_dataset ? '；另建议多队列合并' : '')
+      : '没有找到匹配的数据集：建议换关键词或放宽数据源',
+    next: nextSteps[0] || null,
+  }
+}
+
+function asArrayLite(value) {
+  if (Array.isArray(value)) return value
+  if (value === null || value === undefined) return []
+  return [value]
+}
+
 function parseSources(value, { defaultSources }) {
   if (value === undefined || value === null || value === '') return [...defaultSources]
   const list = Array.isArray(value) ? value : String(value).split(/[,，\s]+/)
@@ -1367,6 +1905,28 @@ function normalizeDesignFromSheet(sheet, aliases = {}) {
   return {
     samples,
     columns: { sample: sampleColumn, group: groupColumn, donor: donorColumn, batch: batchColumn, pair: pairColumn, material: materialColumn },
+  }
+}
+
+/**
+ * 按已判定的矩阵方向取样本名：transpose=true（文件是 特征×样本）→ 表头列；
+ * transpose=false（文件是 样本×特征）→ 首列值。身份核对必须与方向判定共用同一结果。
+ */
+function readMatrixSamplesByOrientation(file, transpose) {
+  if (!file || !fs.existsSync(file)) return null
+  if (!/\.(csv|tsv|txt)(\.gz)?$/i.test(file)) return null
+  try {
+    let text
+    if (/\.gz$/i.test(file)) text = zlib.gunzipSync(fs.readFileSync(file)).slice(0, 400_000).toString('utf8')
+    else text = fs.readFileSync(file, 'utf8').slice(0, 400_000)
+    const lines = text.split(/\r?\n/).filter((line) => line.trim() !== '')
+    if (lines.length < 2) return null
+    const delimiter = (lines[0].match(/\t/g) || []).length >= (lines[0].match(/,/g) || []).length ? '\t' : ','
+    const header = lines[0].split(delimiter).map((value) => value.trim().replace(/^"|"$/g, ''))
+    if (transpose) return header.slice(1).filter(Boolean)
+    return lines.slice(1).map((line) => String(line.split(delimiter)[0] || '').trim().replace(/^"|"$/g, '')).filter(Boolean)
+  } catch {
+    return null
   }
 }
 
@@ -1534,7 +2094,10 @@ async function opRegister(runtime, store, args) {
     seen.add(sample.sample_id)
   }
   const matrixFile = (collected.find((file) => /matrix|expr|counts|\.csv|\.tsv|\.txt|\.gz/i.test(file.name)) || collected[0]).path
-  const matrixSamples = readMatrixHeaderSamples(matrixFile)
+  // 方向判定必须在身份核对之前（否则样本×特征矩阵会拿基因列去对样本表）
+  const orientation = detectMatrixOrientation(matrixFile, design.samples.map((sample) => sample.sample_id))
+  const transpose = args.transpose !== undefined && args.transpose !== null ? Boolean(args.transpose) : orientation.transpose
+  const matrixSamples = readMatrixSamplesByOrientation(matrixFile, transpose)
   const _tidyDeclared = String(args.data_kind || args.kind || '').toLowerCase() === 'tidy'
   if (!_tidyDeclared && matrixSamples && matrixSamples.length) {
     const sampleIds = new Set(design.samples.map((sample) => sample.sample_id))
@@ -1554,6 +2117,39 @@ async function opRegister(runtime, store, args) {
     }
   }
 
+  /** 从矩阵数值形态自动判断尺度（counts / log_expression / normalized_expression）。 */
+  function inferScaleFromMatrix(file) {
+    try {
+      if (!file || !fs.existsSync(file)) return null
+      let text
+      if (/\.gz$/i.test(file)) text = zlib.gunzipSync(fs.readFileSync(file)).toString('utf8').slice(0, 400_000)
+      else text = fs.readFileSync(file, 'utf8').slice(0, 400_000)
+      const lines = text.split(/\r?\n/).filter((line) => line.trim() !== '').slice(0, 30)
+      if (lines.length < 2) return null
+      const delimiter = (lines[0].match(/\t/g) || []).length >= (lines[0].match(/,/g) || []).length ? '\t' : ','
+      const values = []
+      for (const line of lines.slice(1)) {
+        const cells = line.split(delimiter).slice(1, 40)
+        for (const cell of cells) {
+          const value = Number(String(cell).trim().replace(/^"|"$/g, ''))
+          if (Number.isFinite(value)) values.push(value)
+        }
+      }
+      if (!values.length) return null
+      const integers = values.filter((value) => Number.isInteger(value)).length
+      const max = Math.max(...values)
+      const min = Math.min(...values)
+      // 只有「非负整数」才可能是原始 counts；负整数/小数一律只写「疑似」，verified=false 等用户确认
+      if (min >= 0 && integers / values.length > 0.98) {
+        return { type: 'counts', verified: true, evidence: '自动探测：非负整数（疑似 counts，可直接用于计数模型）' }
+      }
+      if (min < 0 || max <= 40) {
+        return { type: 'log_expression', verified: false, evidence: '自动探测：存在负值或量级偏小，疑似已 log/标准化；**需要你确认尺度**后再做推断' }
+      }
+      return { type: 'normalized_expression', verified: false, evidence: '自动探测：非整数强度（疑似归一化表达）；需要确认尺度' }
+    } catch { return null }
+  }
+
   // 尺度声明：显式要求 verified 才能用于推断
   let scaleDeclaration
   if (args.scale && typeof args.scale === 'object') {
@@ -1564,11 +2160,15 @@ async function opRegister(runtime, store, args) {
       note: args.scale.note || null,
     }
   } else {
+    const declared = String(args.scale || '').toLowerCase()
+    const matrixForScale = (collected.find((file) => /matrix|expr|counts|expression|\.csv|\.tsv|\.txt/i.test(file.name)) || collected[0]).path
+    const inferred = !declared ? inferScaleFromMatrix(matrixForScale) : null
     scaleDeclaration = {
-      type: String(args.scale || 'unknown').toLowerCase(),
-      verified: args.verified === true || args.scale_verified === true,
-      evidence: args.scale_evidence || (args.verified === true ? '用户显式声明 verified=true' : null),
-      note: null,
+      type: declared || (inferred ? inferred.type : 'unknown'),
+      // 自动探测出的尺度可以参与推断（register 时显式给了 unknown 则不自动覆盖）
+      verified: args.verified === true || args.scale_verified === true || Boolean(inferred && inferred.verified === true),
+      evidence: args.scale_evidence || (args.verified === true ? '用户显式声明 verified=true' : (inferred ? inferred.evidence : null)),
+      note: inferred && declared === 'unknown' ? '显式写了 unknown，未采用自动探测' : null,
     }
   }
   if (!['counts', 'tpm', 'log_expression', 'microarray', 'unknown', 'metabolomics_profile', 'normalized_expression', 'star_counts', 'intensity', 'peak_area', 'log2_intensity', 'abundance', 'none'].includes(scaleDeclaration.type)) {
@@ -1577,10 +2177,6 @@ async function opRegister(runtime, store, args) {
 
   const assay = args.assay || inferAssay(collected, args)
   const dataKind = args.data_kind || inferDataKind(assay, args)
-  // 方向：显式优先，否则按样本表 / 数值性探测（决定各插件 open 的 transpose）
-  const primaryMatrix = (collected.find((file) => /matrix|expr|counts|expression|\.csv|\.tsv|\.txt/i.test(file.name)) || collected[0]).path
-  const orientation = detectMatrixOrientation(primaryMatrix, design.samples.map((sample) => sample.sample_id))
-  const transpose = args.transpose !== undefined && args.transpose !== null ? Boolean(args.transpose) : orientation.transpose
   const filesFingerprint = collected.map((file) => `${file.name}:${file.sha256}`).sort().join('|')
   const designFingerprint = JSON.stringify({
     samples: design.samples.map((sample) => [sample.sample_id, sample.group, sample.donor_id, sample.batch, sample.pair_id]).sort(),
@@ -2527,8 +3123,11 @@ export function buildToolDefinition(hostRuntime) {
       verify: { type: 'boolean', description: 'action=evidence 校验模式：逐条核对 run/table/row/figure 引用' },
       limit_rows: { type: 'number', description: '预览行数' },
       target: { type: 'string', enum: ['run', 'dataset', 'export'], description: 'action=delete 的删除对象' },
+      advise_need: { type: 'string', description: 'action=advise 的一句话问题/需求（也接受 need/query）；返回推荐数据集、文献线索、推荐方案与下一步' },
+      disease: { type: 'string', description: 'action=topics 的疾病/场景（如 胃癌肝转移）；返回候选临床问题与近两年综述热点' },
       purge: { type: 'boolean', description: 'delete run 时 true=彻底删除（默认移入 trash/runs）' },
       force: { type: 'boolean', description: 'delete dataset 时允许删除仍被 run 引用的数据集记录' },
+      register_dataset: { type: 'boolean', description: 'harmonize 后是否把合并矩阵登记成数据集（默认 true；登记后可直接 plan 继续跑）' },
       output_dir: { type: 'string', description: 'action=settings：默认导出目录（export 未给 out_path 时用）；传空字符串清除' },
       download_dir: { type: 'string', description: 'action=settings：默认下载目录' },
       export_id: { type: 'string', description: 'action=export 回查 / action=delete 删除导出记录' },
