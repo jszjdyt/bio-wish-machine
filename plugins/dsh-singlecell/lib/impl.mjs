@@ -675,7 +675,7 @@ export async function opRun(runtime, { dataset, step, params, actor } = {}) {
   }
   const engine = await ensureEngine(runtime)
   const started = Date.now()
-  const timeout = stepId === 'embed' || stepId === 'cluster' || stepId === 'markers' ? 300_000 : 180_000
+  const timeout = stepId === 'embed' || stepId === 'cluster' || stepId === 'markers' || stepId === 'neighbors' ? 900_000 : 180_000
   let result
   try {
     result = await engine.request('run', { dataset: id, step: stepId, params: params || {} }, { timeout })
